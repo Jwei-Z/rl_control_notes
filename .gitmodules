@@ -1,0 +1,3 @@
+[submodule "1_RL/ZhaoGit_Book-RL"]
+	path = 1_RL/ZhaoGit_Book-RL
+	url = https://github.com/MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning.git
