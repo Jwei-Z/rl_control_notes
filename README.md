@@ -6,33 +6,28 @@
 
 ```text
 rl_control_notes/
-├── 1_RL/                                
-│   ├── Note/                           # 基础理论笔记
-│   │   ├── code/                       # 编程习题与算法复现代码
-│   │   └── image/                      # 笔记图表与示意图
-│   ├── Paper/                          # 经典算法论文精读笔记
-│   ├── XMIND/                          # 知识体系思维导图
-│   ├── Reinforcement Learning_ An Introduction.pdf 
-│   ├── Mathematical Foundations of Reinforcement Learning.pdf 
-│   ├── 动手学强化学习.pdf               
-│   └── RL-Control科研学习手册 · 语雀.pdf # 指引
+├── 1_RL/                               # 强化学习基础理论与算法
+│   ├── Note/                           # 理论推导与核心算法笔记
+│   │   ├── code/                       # 编程练习与算法复现代码
+│   │   └── image/                      # 笔记图表与模型示意图
+│   ├── Paper/                          # 经典强化学习论文精读
+│   └── XMIND/                          # 知识体系思维导图
 │
-├── 2_自动控制原理/                        
-│   ├── Note/                           # 章节笔记
-│   ├── PPT/                            # 课程课件资料
-│   ├── XMIND/                          # 知识体系思维导图
-│   └── Feedback Control of Dynamic Systems (7th+Edition) .pdf
+├── 2_自动控制原理/                      # 经典控制理论
+│   ├── Note/                           # 章节核心笔记与系统分析
+│   ├── PPT/                            # 课程课件与参考资料
+│   └── XMIND/                          # 知识体系思维导图
 │
-├── 3_现代控制原理/                        
-│   ├── Note/                           # 核心专题笔记
-│   ├── XMIND/                          # 知识体系思维导图
-│   ├── 现代控制理论.pdf                 
-│   └── 现代控制理论习题解答.pdf
+├── 3_现代控制原理/                      # 现代控制理论
+│   ├── Note/                           # 状态空间、稳定性与最优控制笔记
+│   └── XMIND/                          # 知识体系思维导图
 │
-├── 4_周报/                             # 学习周报
+├── 4_周报/                             # 课题每周学习汇报归档
 │
-└── 5_GoResearch/                       # 课题调研与前沿文献
-    ├── Note/                           # 框架分析与前沿文献笔记
-    ├── Paper/                          # 交互导航与多接触前沿论文
-    └── Ref/                            # 课题参考资料与文献
+└── 5_GoResearch/                       # 具身智能与多接触移动操作课题
+    ├── Note/                           # 前沿论文精读与理论推导笔记
+    │   └── image/                      # 算法架构与仿真图表
+    ├── Nvidia-Sim/                     # 仿真环境搭建与算法复现指南
+    ├── Paper/                          # 多接触与交互导航前沿文献
+    └── Ref/                            # 课题参考资料与开源文献
 ```
