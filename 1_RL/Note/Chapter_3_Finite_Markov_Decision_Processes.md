@@ -1,10 +1,26 @@
+---
+title: "Chapter 3: Finite Markov Decision Processes"
+type: course
+domain: 强化学习理论
+course: Sutton & Barto RL
+aliases:
+  - "RL第3章：有限马尔可夫决策过程"
+tags:
+  - course
+  - rl
+  - sutton-barto
+prerequisites:
+  - "[[马尔可夫决策过程MDP]]"
+  - "[[贝尔曼方程与值迭代]]"
+---
+
 # Part I: Tabular Solution Methods
 
 ## Chapter 3 Finite Markov Decision Processes
 
 ### 3.1 The Agent–Environment Interface
 
-#### 四参数环境动力学函数
+**四参数环境动力学函数**
 
 系统在当前时刻的状态与奖励随机变量 $(S_t, R_t)$ 仅由前一时刻的状态与动作 $(S_{t-1}, A_{t-1})$ 决定。该联合条件概率分布即为环境动力学函数：
 $$
@@ -18,7 +34,7 @@ $$
   \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) = 1, \quad \forall s \in \mathcal{S}, a \in \mathcal{A}(s)
   $$
 
-#### 状态转移概率
+**状态转移概率**
 
 求在状态 $s$ 执行动作 $a$ 后，转移到 $s'$ 的概率，不关注中途获得何种奖励：
 $$
@@ -30,7 +46,7 @@ $$
   p(s' \mid s, a) = \sum_{r \in \mathcal{R}} p(s', r \mid s, a)
   $$
 
-#### 状态-动作对的期望奖励
+**状态-动作对的期望奖励**
 
 在状态 $s$ 做出动作 $a$ 后，能获得的即时奖励期望值（此时转移尚未实际发生）：
 $$
@@ -49,14 +65,13 @@ $$
   \Pr\{R_t = r \mid S_{t-1}=s, A_{t-1}=a\} = \sum_{s' \in \mathcal{S}} p(s', r \mid s, a)
   $$
 
-#### 状态-动作-下一状态三元组的期望奖励
+**状态-动作-下一状态三元组的期望奖励**
 
 在状态 $s$ 执行动作 $a$ 且**已知系统已确定转移到下一状态 $s'$** 的条件下，所获奖励的期望值：
 $$
 r(s, a, s') \doteq \mathbb{E}[R_t \mid S_{t-1} = s, A_{t-1} = a, S_t = s'] \\
 = \sum_{r \in \mathcal{R}} r \frac{p(s', r \mid s, a)}{p(s' \mid s, a)}
 $$
-
 
 1. **展开条件期望**：
    $$
@@ -100,24 +115,24 @@ $$
      \Pr(R_t = r \mid S_{t-1} = s, A_{t-1} = a, S_t = s') = \frac{p(s', r \mid s, a)}{p(s' \mid s, a)}
      $$
 
-#### Exercise 3.2
+**Exercise 3.2**
 
-##### **部分可观测系统中的历史强依赖任务**
+**部分可观测系统中的历史强依赖任务**
 
 - **机理**：标准 MDP 强依赖**马尔可夫性质**，即 $P(s_{t+1}, r_{t+1} \mid s_t, a_t) = P(s_{t+1}, r_{t+1} \mid s_t, a_t, s_{t-1}, a_{t-1}, \dots)$。
 - **为何 MDP 难以有效表达**：
   - 当智能体只能获取不完全的局部观测 $o_t$时，当前观测完全不具备马尔可夫性。
   - 尽管理论上可将“从初始步到当前步的全部历史轨迹” $h_t = (o_0, a_0, \dots, o_t)$ 重新定义为新的“状态”，但在实际计算中，该历史状态空间随时间步呈指数级爆炸，使得基于状态转移表的规划与学习彻底失去**实用性**。
 
-##### 开放式自我演化与内在动机任务
+**开放式自我演化与内在动机任务**
 
 - **机理**：生物与通用智能系统的演进常表现为“探索未知、积累多样化技能、增强对环境的掌握力”（如好奇心驱动、无监督技能发现）。
 - **为何 MDP 难以有效表达**：
   - 这类任务根本不存在一个外在预设的“目标状态”或“外部奖励标量”。强行设计启发式的内在奖励信号极易导致智能体陷入局部极值（如“电视机雪花噪点陷阱”，因噪点永远无法预测而永远获得高内在奖励）。
 
-#### Exercise 3.3
+**Exercise 3.3**
 
-##### 划定边界的根本法则
+**划定边界的根本法则**
 
 划分“智能体”与“环境”时，不能依赖物理外壳（如皮肤、汽车铁壳）作为界限，必须依据以下**根本原则**：
 
@@ -128,7 +143,7 @@ $$
 - **为什么轮胎力矩不能作为人机驾驶任务的动作**：
   - 驾驶员无法凭空命令“轮胎瞬间输出 $400\text{ N}\cdot\text{m}$ 扭矩”。结冰路面上油门踩死也产生不了该力矩，因为它是动力学交互的状态结果。**如果一个量依赖环境物理动力学才能生成，它就必须是状态，而绝不能是动作。**
 
-##### 划界是自由选择，还是存在根本性制约？
+**划界是自由选择，还是存在根本性制约？**
 
 **这既不是完全自由的随意选择，也不是单一物理客观固定的。**
 
@@ -137,7 +152,7 @@ $$
   - 若研究的是**车辆极限漂移与动态避障**，边界应划在车辆底层底盘控制接口；
   - 若研究的是**无人车智慧城市调度**，底层车辆应全部内化为“环境”，智能体的动作应划在宏观路由层。
 
-#### Exercise 3.4
+**Exercise 3.4**
 
 根据条件概率乘法公式：
 $$
@@ -169,7 +184,7 @@ $$
 - **核心目标：** 强化学习的非形式化目标是让智能体在长期运行中最大化所获得的累积奖励。   
 - **期望回报：** 算法优化的具体目标是最大化**期望回报**，其中回报记为 $G_t$，它被明确定义为未来奖励序列的某种特定数学函数。   
 
-#### 折扣回报
+**折扣回报**
 
 为确保无限时域下的数学严谨性与收敛性。智能体的目标转变为选择动作 $A_t$ 以最大化期望折扣回报：   
 $$
@@ -185,8 +200,7 @@ $$
 
 - **适用条件：** 对所有 $t < T$ 均成立，即使终止事件恰好在 $t+1$ 步发生也依然有效，其前提是统一定义终止时刻的回报为零：$G_T = 0$。   
 
-> [!IMPORTANT]
->
+> 
 > 设一个回合在时刻 $T$ 结束（$T$ 是终止时刻）：   
 >
 > - 在时刻 $t = T - 1$（最后一幕决策）：
@@ -198,14 +212,14 @@ $$
 >
 > 此时，对于 $t = T - 1$ 来说，**终止事件恰好就发生在紧接着的下一步 $t+1 = T$**。   在时刻 $t = T - 1$，我们可以从两个角度来看待回报 $G_{T-1}$：   
 >
-> #### 角度一：根据回报的原始定义
+> **角度一：根据回报的原始定义**
 >
 > 在 $T-1$ 时刻之后，由于游戏在时刻 $T$ 就彻底结束了，整个生命周期里**真正能拿到的最后一个奖励就是 $R_T$**。因此，根据原始定义，这最后一刻的回报显然就是：   
 > $$
 > G_{T-1} = R_T
 > $$
 >
-> #### 角度二：强行套用递推
+> **角度二：强行套用递推**
 >
 > $$
 > G_t = R_{t+1} + \gamma G_{t+1}
@@ -232,7 +246,7 @@ $$
 > - 因此，“在终点之后还能获得的累积奖励”客观上就是 0。定义 $G_T = 0$ 在物理世界与任务逻辑上完全合理。   
 > - 同理，终止状态的价值函数也必然严格为零：$V(\text{terminal}) = 0$。
 
-#### Exercise 3.6
+**Exercise 3.6**
 
 - **分幕式任务（Episodic task）：** 倒立摆一旦倾倒失败，该回合立即宣告结束，环境进入终止状态，时间轴在第 $T$ 步截断。 
 - **奖励规则：** 失败之前的所有步骤奖励全为 $0$，只有在失败那一瞬间给出的即时奖励为 $-1$。   
@@ -244,8 +258,11 @@ $$
 
 根据带折扣的回报定义公式：
 $$
-G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots + \gamma^{K-1} R_{t+K} \\
-\begin{aligned}  &= 0 + \gamma \cdot 0 + \dots + \gamma^{K-2} \cdot 0 + \gamma^{K-1} \cdot (-1) \\ &= -\gamma^{K-1} \end{aligned}
+\begin{aligned}
+G_t &= R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots + \gamma^{K-1} R_{t+K} \\
+&= 0 + \gamma \cdot 0 + \dots + \gamma^{K-2} \cdot 0 + \gamma^{K-1} \cdot (-1) \\
+&= -\gamma^{K-1}
+\end{aligned}
 $$
 
 >Alternatively, we could treat pole-balancing as a continuing task, using discounting. In this case the reward would be 1 on each failure and zero at all other times. The return at each time would then be related to K 1, where K is the number of time steps before failure (as well as to the times of later failures).
@@ -278,12 +295,12 @@ $$
 
 ### 3.5 Policies and Value Functions
 
-#### 回报（Return）与状态价值（State Value）
+**回报（Return）与状态价值（State Value）**
 
-- **一般情况下（随机系统）**：状态价值是回报的**条件数学期望。回报是沿单条具体轨迹采样的随机变量，状态价值是对所有可能轨迹的回报按其发生概率加权求和得到的确定标量。
+- **一般情况下（随机系统）**：状态价值是回报的**条件数学期望**。回报是沿单条具体轨迹采样的随机变量，状态价值是对所有可能轨迹的回报按其发生概率加权求和得到的确定标量。
 - **特殊情况下（确定性系统）**：当策略 $\pi(a\vert{}s)$、奖励函数 $p(r\vert{}s,a)$、状态转移概率 $p(s'\vert{}s,a)$ 均为确定性时，从特定状态出发的后续轨迹唯一，回报退化为常数，**状态价值在数值上完全等价于该唯一轨迹的回报**。
 
-#### Exercise 3.11
+**Exercise 3.11**
 
 **根据全期望公式对动作展开**，智能体在状态 $S_t = s$ 下根据策略 $\pi(a \mid s) = \Pr(A_t = a \mid S_t = s)$ 选择动作 $a$：
 $$
@@ -306,7 +323,7 @@ $$
 \mathbb{E}[R_{t+1} \mid S_t = s] = \sum_{a \in \mathcal{A}(s)} \pi(a \mid s) \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} r \, p(s', r \mid s, a)
 $$
 
-#### 状态价值函数（State-Value Function, $v_\pi$）
+**状态价值函数（State-Value Function, $v_\pi$）**
 
 - **定义**：在策略 $\pi$ 下，状态 $s$ 的价值函数记为 $v_\pi(s)$，表示智能体从状态 $s$ 开始、且此后始终遵循策略 $\pi$ 行动时所能获得的期望回报。   
 
@@ -320,7 +337,7 @@ $$
   - **终止状态约定**：若任务中存在终止状态，其状态价值恒为零（$v_\pi(\text{terminal}) = 0$）。   
   - **数学本质**：$G_t$ 是一个随机变量。对于给定的初始状态 $S_t = s$，因为后续的每一个动作、转移状态和即时奖励都可能存在随机波动，也即可以认为每一次策略都不同，但是只统计这一次策略，每次沿环境运行所走出的轨迹不同，计算得到的 $G_t$ 数值也不同。$v_\pi(s)$ 是一个**确定性的标量**。它消除了单次轨迹采样的偶然性(均值)，反映了从该状态出发长期收益的理论平均水平。
 
-#### 动作价值函数（Action-Value Function, $q_\pi$）
+**动作价值函数（Action-Value Function, $q_\pi$）**
 
 - **定义**：在策略 $\pi$ 下，在状态 $s$ 执行动作 $a$ 的价值记为 $q_\pi(s, a)$，表示智能体从状态 $s$ 开始，首先执行指定动作 $a$，此后各步均遵循策略 $\pi$ 行动时所能获得的期望回报。   
 
@@ -329,7 +346,7 @@ $$
   q_\pi(s, a) \doteq \mathbb{E}_\pi [G_t \mid S_t = s, A_t = a] = \mathbb{E}_\pi \left[ \sum_{k=0}^\infty \gamma^k R_{t+k+1} \;\middle\vert{}\; S_t = s, A_t = a \right]
   $$
 
-##### 动作价值 $q_\pi(s, a)$ 与其**后继动作价值 $q_\pi(s', a')$** (Exercise 3.17)
+**动作价值 $q_\pi(s, a)$ 与其后继动作价值 $q_\pi(s', a')$ (Exercise 3.17)**
 
 ![image-20260921153441972](image/image-20260921153441972.png)
 
@@ -346,33 +363,45 @@ q_\pi(s, a) \doteq \mathbb{E}_\pi \left[ G_t \;\middle\vert{}\; S_t = s, A_t = a
 $$
 利用回报的递归分解关系 $G_t = R_{t+1} + \gamma G_{t+1}$，展开期望：
 $$
-q_\pi(s, a) = \mathbb{E}_\pi \left[ R_{t+1} + \gamma G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] \\
- = \sum_{s'} \sum_{r} p(s', r \mid s, a) \left[ r + \gamma\, \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s' \right] \right]
+\begin{aligned}
+q_\pi(s, a) &= \mathbb{E}_\pi \left[ R_{t+1} + \gamma G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] \\
+&= \sum_{s'} \sum_{r} p(s', r \mid s, a) \left[ r + \gamma\, \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s' \right] \right]
+\end{aligned}
 $$
 注意，中间项 $\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s' \right]$ 正是下一状态的价值 $v_\pi(s')$。而从状态 $s'$ 出发的价值，等于其后续所有可能执行的动作 $a'$ 对应的动作价值 $q_\pi(s', a')$ 按策略概率 $\pi(a' \mid s')$ 的加权和：
 $$
-\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s' \right] = \sum_{a'} \pi(a' \mid s') \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s', A_{t+1} = a' \right] = \sum_{a'} \pi(a' \mid s') q_\pi(s', a')
+\begin{aligned}
+\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s' \right] &= \sum_{a'} \pi(a' \mid s') \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s', A_{t+1} = a' \right] \\
+&= \sum_{a'} \pi(a' \mid s') q_\pi(s', a')
+\end{aligned}
 $$
 将此项代入前面的展开式中：
 $$
 \begin{aligned} q_\pi(s, a) &\doteq \mathbb{E}_\pi \left[ G_t \;\middle\vert{}\; S_t = s, A_t = a \right] \\ &= \mathbb{E}_\pi \left[ R_{t+1} + \gamma G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] \\ &= \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma\, \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s' \right] \right] \\ &= \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma \sum_{a'} \pi(a' \mid s') \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} = s', A_{t+1} = a' \right] \right] \\ &= \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma \sum_{a'} \pi(a' \mid s') q_\pi(s', a') \right] \end{aligned}
 $$
 
-##### 动作价值期望形式与状态价值(全期望公式/Exercise 3.18)
+**动作价值期望形式与状态价值(全期望公式/Exercise 3.18)**
 
 $$
-q_\pi(s, a) \doteq \mathbb{E}_\pi \left[ R_{t+1} + \gamma G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right]\\
- = \mathbb{E}\left[ R_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] + \gamma \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right]
+\begin{aligned}
+q_\pi(s, a) &\doteq \mathbb{E}_\pi \left[ R_{t+1} + \gamma G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] \\
+&= \mathbb{E}\left[ R_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] + \gamma \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right]
+\end{aligned}
 $$
 
 看右边，此时智能体只知道当前是 $(S_t = s, A_t = a)$，还不知道下一刻会跳到哪个状态 $S_{t+1}$。概率论中的全期望公式指出：**对未来的总期望，可以先假设下一状态 $S_{t+1}$ 已知求条件期望，再对所有可能的 $S_{t+1}$ 求外层平均**：
 $$
-\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] = \underbrace{\mathbb{E}_{S_{t+1}} \Big[ \overbrace{\mathbb{E}_\pi \left( G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a, S_{t+1} \right)}^{\text{内层：已知具体跳到了哪个 } S_{t+1} \text{ 时的回报均值}} \;\Big\vert{}\; S_t = s, A_t = a \Big]}_{\text{外层：由于实际会跳到哪个 } S_{t+1} \text{ 还不确定，对所有可能的下一状态求加权平均}}
+\begin{aligned}
+&\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a \right] \\
+&\quad = \mathbb{E}_{S_{t+1}} \Big[ \underbrace{\mathbb{E}_\pi \big( G_{t+1} \mid S_t = s, A_t = a, S_{t+1} \big)}_{\text{内层：已知 } S_{t+1} \text{ 时的回报均值}} \;\Big\vert\; S_t = s, A_t = a \Big]
+\end{aligned}
 $$
 根据马尔可夫性质：**一旦当前状态（在 $t+1$ 时刻即为 $S_{t+1}$）已经确定，未来的发展轨迹只取决于当前状态，与过去的历史（如何来到这个状态的 $S_t, A_t$）完全无关**。因此，条件项里的 $S_t = s, A_t = a$ 就可以被直接剔除：
 $$
-\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a, S_{t+1} \right] = \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} \right] \\
- = v_\pi(S_{t+1})
+\begin{aligned}
+\mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_t = s, A_t = a, S_{t+1} \right] &= \mathbb{E}_\pi \left[ G_{t+1} \;\middle\vert{}\; S_{t+1} \right] \\
+&= v_\pi(S_{t+1})
+\end{aligned}
 $$
 把这一项重新放回外层的期望结构中，$v_\pi(\cdot)$ 本身已经是一个**确定性的数学函数**（即给定一个具体状态 $s'$，其期望长期价值 $v_\pi(s')$ 是一个固定常数）。在方括号内部，**唯一剩下的随机变量就是下一时刻的状态 $S_{t+1}$**。既然括号里只有 $S_{t+1}$ 是随机的，这个期望本质上就是在对 $S_{t+1}$ 的概率分布做加权平均，省略下标$S_{t+1}$：
 $$
@@ -383,8 +412,7 @@ $$
 q_\pi(s, a) = \mathbb{E}\left[ R_{t+1} + \gamma v_\pi(S_{t+1}) \;\middle\vert{}\; S_t = s, A_t = a \right]
 $$
 
-
-#### 两类价值函数的关系(Exercise3.12/13)
+**两类价值函数的关系(Exercise3.12/13)**
 
 1. **随机性的双重来源**：
 
@@ -407,9 +435,7 @@ $$
    q_\pi(s, a) = \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \left[ r + \gamma \, v_\pi(s') \right]
    $$
 
-   > [!IMPORTANT]
-   >
-   > ### Exercise 3.12 推导过程
+   > **Exercise 3.12 推导过程**
    >
    > 1. **根据状态价值函数的定义**
    >
@@ -435,7 +461,7 @@ $$
    >    v_\pi(s) = \sum_{a \in \mathcal{A}(s)} \pi(a \mid s) \, q_\pi(s, a)
    >    $$
    >
-   > ### Exercise 3.13 推导过程
+   > **Exercise 3.13 推导过程**
    >
    > 1. **根据动作价值函数的定义**
    >
@@ -455,8 +481,19 @@ $$
    >
    >    由四参数环境转移概率函数 $p(s', r \mid s, a) \doteq \Pr(S_{t+1} = s', R_{t+1} = r \mid S_t = s, A_t = a)$，利用离散随机变量的联合分布期望展开公式：   
    >    $$
-   >    \mathbb{E}_\pi [R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a] = \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \, \mathbb{E}_\pi [R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a, S_{t+1} = s', R_{t+1} = r] \\
-   >    \mathbb{E}[R_{t+1} + \gamma G_{t+1} \mid S_t=s, A_t=a] = \sum_{s', r} \underbrace{\Pr(S_{t+1}=s', R_{t+1}=r \mid S_t=s, A_t=a)}_{\text{环境转移概率 } p(s', r \mid s, a)} \cdot \underbrace{\mathbb{E}[R_{t+1} + \gamma G_{t+1} \mid S_t=s, A_t=a, S_{t+1}=s', R_{t+1}=r]}_{\text{假定特定分支 }(s', r)\text{ 发生后的期望}}
+   >    \begin{aligned}
+   >    \mathbb{E}_\pi [R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a]
+   >    &= \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \\
+   >    &\quad \times \mathbb{E}_\pi [R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a, S_{t+1} = s', R_{t+1} = r]
+   >    \end{aligned}
+   >    $$
+   >    即按环境转移概率对各分支 $(s', r)$ 求期望：
+   >    $$
+   >    \begin{aligned}
+   >    \mathbb{E}[R_{t+1} + \gamma G_{t+1} \mid S_t=s, A_t=a]
+   >    &= \sum_{s', r} \underbrace{\Pr(S_{t+1}=s', R_{t+1}=r \mid S_t=s, A_t=a)}_{p(s', r \mid s, a)} \\
+   >    &\quad \times \underbrace{\mathbb{E}[R_{t+1} + \gamma G_{t+1} \mid S_t=s, A_t=a, S_{t+1}=s', R_{t+1}=r]}_{\text{分支 }(s', r)\text{ 发生后的条件期望}}
+   >    \end{aligned}
    >    $$
    >
    > 4. **化简条件期望项**
@@ -465,14 +502,14 @@ $$
    >
    >    >“在给定 $S_{t+1} = s'$ 且 $R_{t+1} = r$ 的条件下”，正是全期望公式右侧被求和项中的那个**条件期望项**。当我们把注意力放到单条分支，即**条件已经包含了 $S_{t+1} = s'$ 且 $R_{t+1} = r$** 时，期望项内部发生了两处本质变化：
    >    >
-   >    >#### 1. 即时奖励项 $R_{t+1}$ 从“随机变量”变成了“已知常数”
+   >    >**1. 即时奖励项 $R_{t+1}$ 从“随机变量”变成了“已知常数”**
    >    >
    >    >在条件里已经写明了“$R_{t+1}$ 发生的值是 $r$”，因此在这个条件下，$R_{t+1}$ 不再有任何不确定性：
    >    >$$
    >    >\mathbb{E}[R_{t+1} \mid \dots, R_{t+1}=r] = r
    >    >$$
    >    >
-   >    >#### 2. 未来回报项 $G_{t+1}$ 根据马尔可夫性质简化
+   >    >**2. 未来回报项 $G_{t+1}$ 根据马尔可夫性质简化**
    >    >
    >    >未来回报 $G_{t+1} = R_{t+2} + \gamma R_{t+3} + \dots$ 依赖于从 $t+1$ 开始往后的整个轨迹。
    >    >
@@ -509,14 +546,15 @@ $$
    >    $$
    >    q_\pi(s, a) = \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \left[ r + \gamma \, v_\pi(s') \right]
    >    $$
-#### 贝尔曼期望方程
 
-贝尔曼方程的核心思想是：**“当前状态的价值，等于当前步的即时奖励加上后继状态价值的折现期望。”**它将一个长期累积收益的求解问题，转化为了**相邻两个时间步之间的递归一致性关系**。
+**贝尔曼期望方程**
+
+贝尔曼方程的核心思想是：**“当前状态的价值，等于当前步的即时奖励加上后继状态价值的折现期望。”** 它将一个长期累积收益的求解问题，转化为了**相邻两个时间步之间的递归一致性关系**。
 $$
 v_\pi(s) = \sum_{a \in \mathcal{A}(s)} \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma v_\pi(s') \right], \quad \forall s \in \mathcal{S}
 $$
 
-#### 回溯图
+**回溯图**
 
 ![image-20260920172530920](image/image-20260920172530920.png)
 
@@ -534,7 +572,7 @@ $$
 
 整个图展示了一个**两层加权平均**：先根据转移概率 $p$ 对所有可能的 $(s', r)$ 进行平均，得到在状态 $s$ 下执行动作 $a$ 的动作价值 $q_\pi(s, a)$；再根据策略 $\pi$ 对所有动作 $a$ 进行平均，最终汇聚并“更新”得到根节点 $s$ 的价值 $v_\pi(s)$。
 
-####  Gridworld&向量化
+**Gridworld&向量化**
 
 ![image-20260921095734280](image/image-20260921095734280.png)
 
@@ -557,9 +595,8 @@ v_\pi(s) = \sum_{a} \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \left[ r + \ga
 $$
 每个格子的数值代表从该格子出发、在随机策略下长期累积折扣回报的期望值。   
 
-> [!IMPORTANT]
->
-> **贝尔曼方程不是“按时间先后单向递推”的计算公式，而是一个由所有状态互相约束构成的“联立线性方程组”。**在 $5 \times 5$ 的网格世界中，一共有 25 个状态（$s_1, s_2, \dots, s_{25}$）。根据贝尔曼方程，**每一个状态都对应一个关于后继状态的方程**：
+> 
+> **贝尔曼方程不是“按时间先后单向递推”的计算公式，而是一个由所有状态互相约束构成的“联立线性方程组”。** 在 $5 \times 5$ 的网格世界中，一共有 25 个状态（$s_1, s_2, \dots, s_{25}$）。根据贝尔曼方程，**每一个状态都对应一个关于后继状态的方程**：
 >
 > - 状态 $A$ 的方程：$v_\pi(A) = 10 + 0.9 \, v_\pi(A')$
 > - 状态 $A'$ 的方程：智能体在 $A'$ 有 4 个方向可以选择，向西或向下会撞墙（得到 $-1$ 并留在原地），向北或向东会进入其他邻居格子（得到 $0$）。因此 $v_\pi(A')$ 的方程会同时包含 $v_\pi(A')$ 自身、上方格子的价值、右方格子的价值。
@@ -577,7 +614,10 @@ $$
 > $$
 > 将中括号内的即时奖励项 $r$ 与未来折现项 $\gamma v_\pi(s')$ 拆开：
 > $$
-> v_\pi(s) = \underbrace{\sum_{a} \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \, r}_{\text{在状态 } s \text{ 下获得的期望即时奖励 } r(s)} + \gamma \sum_{s'} \left( \sum_{a} \pi(a \mid s) p(s' \mid s, a) \right) v_\pi(s')
+> \begin{aligned}
+> v_\pi(s) &= \underbrace{\sum_{a} \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \, r}_{\text{状态 } s \text{ 期望即时奖励 } r(s)} \\
+> &\quad + \gamma \sum_{s'} \left( \sum_{a} \pi(a \mid s) p(s' \mid s, a) \right) v_\pi(s')
+> \end{aligned}
 > $$
 > 若将当前状态记为 $s_i$，后继状态记为 $s_j$，并令：
 >
@@ -616,7 +656,7 @@ $$
 
 **状态价值衡量的是全局长远收益，而不是短期的贪婪回报**；未来的处境（后继状态价值）会通过折现直接对当前状态的价值定性产生决定性影响。   
 
-#### 向量化迭策略算法
+**向量化策略迭代算法**
 
 在实际计算中，直接对高维矩阵求逆代价过大，因此采用迭代逼近的方法：   
 $$
@@ -626,7 +666,7 @@ $$
 1. **初始化**：任意选择一个初始向量 $v_0$。  
 2. **终止条件**：当前后两次迭代的差值小于预设阈值 $\max_{s} \vert{}v_{k+1}(s) - v_k(s)\vert{} < \theta$ 时停止。
 
-#### Exercise 3.15
+**Exercise 3.15**
 
 折扣总回报的定义：
 $$
@@ -662,7 +702,7 @@ $$
 
 无论如何平移，状态间的相对优劣以及不同策略之间的优劣排序都严格保持不变，因此最优策略 $\pi_*$ 也不会改变。
 
-#### Exercise 3.16
+**Exercise 3.16**
 
 分幕式任务中，给所有奖励加上常数 $c$ **会产生显著影响，不能保持任务性质不变**。  假设智能体在时间步 $T$ 达到终止状态，从时间步 $t$ 开始的折现总回报定义为：
 $$
@@ -690,7 +730,7 @@ $$
 
 ### 3.6 Optimal Policies and Optimal Value Functions
 
-#### 策略的偏序关系
+**策略的偏序关系**
 
 价值函数为策略空间建立了一种偏序比较机制：   
 
@@ -706,7 +746,7 @@ $$
   - 这是一种**偏序关系**，而非全序。如果策略 $\pi_1$ 在部分状态优于 $\pi_2$，而在其他状态劣于 $\pi_2$，两者在该定义下不可比。   
   - 只有在所有状态 $s \in \mathcal{S}$ 下的表现均不逊色，才能判定一个策略全局优于另一个策略。   
 
-#### 最优策略（ $\pi_*$）
+**最优策略（$\pi_*$）**
 
 - **存在性定理**：在有限 MDP 中，始终存在至少一个策略，其表现优于或等于所有其他策略。   
 - **最优策略定义**：该优于或等于所有策略的策略即被称为**最优策略**。   
@@ -715,7 +755,7 @@ $$
   - 无论有多少个最优策略，均统一用符号 $\pi_*$ 表示。   
   - 所有最优策略必然共享相同的最优状态价值函数与最优动作价值函数。   
 
-#### 最优状态价值函数（ $v_*$）
+**最优状态价值函数（$v_*$）**
 
 - **定义**：所有最优策略共同拥有的状态价值函数称为最优状态价值函数，记作 $v_*$。   
 
@@ -725,14 +765,19 @@ $$
   $$
 
   $$
-  \text{一个状态的最优价值} = \max_{\text{候选动作}} (\text{该动作带来的期望总收益})\\
-  \begin{aligned} v_*(s) &= \max_{a \in \mathcal{A}(s)} q_{\pi_*}(s, a) \\ &= \max_a \mathbb{E}_{\pi_*}[G_t \mid S_t = s, A_t = a] \\ &= \max_a \mathbb{E}_{\pi_*}[R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a] \\ &= \max_a \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) \mid S_t = s, A_t = a]  \\ &= \max_a \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma v_*(s') \right] \end{aligned}
+  \begin{aligned}
+  &\text{一个状态的最优价值} = \max_{\text{候选动作}} (\text{该动作的期望总收益}) \\[4pt]
+  v_*(s) &= \max_{a \in \mathcal{A}(s)} q_{\pi_*}(s, a) \\
+  &= \max_a \mathbb{E}_{\pi_*}[G_t \mid S_t = s, A_t = a] \\
+  &= \max_a \mathbb{E}_{\pi_*}[R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a] \\
+  &= \max_a \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) \mid S_t = s, A_t = a] \\
+  &= \max_a \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma v_*(s') \right]
+  \end{aligned}
   $$
 
 - **物理含义**：$v_*(s)$ 代表智能体从状态 $s$ 出发，在环境允许的所有可能策略下，理论上所能取得的最大期望长远回报。   
 
-> [!IMPORTANT]
->
+> 
 > 其还有一种形式为
 > $$
 > v(s) = \max_{\pi} \sum_{a} \pi(a|s) \left( \sum_{r} p(r|s,a)r + \gamma \sum_{s'} p(s'|s,a)v(s') \right), \quad \forall s \in \mathcal{S}
@@ -747,7 +792,10 @@ $$
 > $$
 > 利用期望的线性性质将两项合并，得到：   
 > $$
-> \sum_r \left( \sum_{s'} p(s', r \mid s, a) \right) r + \gamma \sum_{s'} \left( \sum_r p(s', r \mid s, a) \right) v(s') = \sum_{s', r} p(s', r \mid s, a) [r + \gamma v(s')]
+> \begin{aligned}
+> &\sum_r \left( \sum_{s'} p(s', r \mid s, a) \right) r + \gamma \sum_{s'} \left( \sum_r p(s', r \mid s, a) \right) v(s') \\
+> &\qquad = \sum_{s', r} p(s', r \mid s, a) [r + \gamma v(s')]
+> \end{aligned}
 > $$
 > 该项的物理意义就是特定状态-动作对的价值 $q(s, a)$。   
 >
@@ -768,7 +816,7 @@ $$
 > v(s) = \max_a \sum_{s', r} p(s', r \mid s, a) [r + \gamma v(s')][cite: 8]
 > $$
 
-#### 最优动作价值函数（$q_*$）
+**最优动作价值函数（$q_*$）**
 
 - **定义**：所有最优策略同样共享唯一的最优动作价值函数，记作 $q_*$。
 
@@ -785,11 +833,11 @@ $$
   
 - **物理含义**：对于状态-动作对 $(s, a)$，$q_*(s, a)$ 衡量的是：在状态 $s$ 下**固定执行动作 $a$**，此后所有步长均**遵循最优策略**时所获得的期望回报。   
 
-#### 从最优价值函数导出最优策略
+**从最优价值函数导出最优策略**
 
 求解出 $v_*$ 或 $q_*$ 后，获取最优策略的方法如下：
 
-##### 基于最优状态价值函数 $v_*$
+**基于最优状态价值函数 $v_*$**
 
 - **动作选择准则**：在任意状态 $s$ 下，只要某个动作能够在贝尔曼最优方程中达到最大值，就可以将其选为最优动作：   
   $$
@@ -806,7 +854,7 @@ $$
 
 - **局限性**：必须掌握环境动力学模型 $p(s', r \mid s, a)$，否则无法计算各个动作的期望值。   
 
-##### 基于最优动作价值函数 $q_*$
+**基于最优动作价值函数 $q_*$**
 
 - **动作选择准则**：
   $$
@@ -818,7 +866,7 @@ $$
 
   - 选择动作时**完全不需要知道环境的状态转移概率 $p(s', r \mid s, a)$**，也无需知道后继状态的可能取值及其转移机制。      
 
-#### BOE 的不动点形式、压缩映射定理与最优性
+**BOE 的不动点形式、压缩映射定理与最优性**
 
 贝尔曼最优方程写为：
 $$
@@ -853,7 +901,7 @@ $$
 
 ---
 
-##### BOE 的不动点方程形式
+**BOE 的不动点方程形式**
 
 贝尔曼最优方程写为矩阵向量形式：
 $$
@@ -875,7 +923,7 @@ $$
 
 ---
 
-##### 压缩映射定理
+**压缩映射定理**
 
 为求解 $v = f(v)$，课件引入了泛函分析中最著名的定理之一：**巴拿赫不动点定理（Banach Fixed-Point Theorem/Contraction Mapping Theorem）**。
 
@@ -900,9 +948,8 @@ $$
    \|x_k - x^*\| \le \gamma^k \|x_0 - x^*\|
    $$
 
-> [!IMPORTANT]
->
-> ### 完备空间
+> 
+> **完备空间**
 >
 > 通俗地说：**一个空间如果“没有孔洞、没有缝隙”，序列在里面无限靠近时极限依然在这个空间内，它就是完备的。**
 >
@@ -917,8 +964,7 @@ $$
 
 ---
 
-
-##### BOE 的求解与值迭代算法
+**BOE 的求解与值迭代算法**
 
 - **定理**：在最大范数（$\infty$-范数，$\|x\|_\infty = \max_i |x_i|$）下，贝尔曼最优算子 $f(v) = \max_\pi (r_\pi + \gamma P_\pi v)$ 是一个**严格的压缩映射**：
   $$
@@ -940,7 +986,7 @@ $$
 
 ---
 
-##### 策略最优性与最优策略构造
+**策略最优性与最优策略构造**
 
 有了 BOE 的唯一解 $v^*$ 之后，随之而来的关键疑问是：**这个 $v^*$ 到底代表什么物理含义？它真的是强化学习中“最好的价值”吗？**
 
@@ -967,7 +1013,7 @@ $$
   v^* \ge v_\pi, \quad \forall \pi
   $$
   （这里的 $\ge$ 是向量逐元素成立，即对所有状态 $s \in \mathcal{S}$，都有 $v^*(s) \ge v_\pi(s)$）。
-- 不存在任何其他策略能在任何一个状态上取得比 $v^*$ 更高的累积回报，**$v^*$ 就是所有策略价值的理论天花板（最优状态价值）**。
+- 不存在任何其他策略能在任何一个状态上取得比 $v^*$ 更高的累积回报，**$v^*$ 就是所有策略价值的理论上限（最优状态价值）**。
 
 最优策略 $\pi^*$ 到底长什么样？如何把它取出来？
 $$
@@ -980,13 +1026,15 @@ $$
   $$
   则只要采取**确定性贪婪选择**：
   $$
-  a^*(s) = \arg\max_{a \in \mathcal{A}(s)} q^*(s, a) \\
-  \pi^*(a|s) = \begin{cases} 1, & a = a^*(s) \\ 0, & a \ne a^*(s) \end{cases}
+  \begin{aligned}
+  a^*(s) &= \arg\max_{a \in \mathcal{A}(s)} q^*(s, a) \\
+  \pi^*(a|s) &= \begin{cases} 1, & a = a^*(s) \\ 0, & a \ne a^*(s) \end{cases}
+  \end{aligned}
   $$
   此策略 $\pi^*$ 就是求解 BOE 得到的**最优策略**！
   
 
-#### Exercise 3.22
+**Exercise 3.22**
 
 ![image-20260922153312094](image/image-20260922153312094.png)
 
@@ -1002,7 +1050,6 @@ $$
 $$
 \begin{cases} v_{\text{right}}(s_0) = 0 + \gamma v_{\text{right}}(s_R) \\ v_{\text{right}}(s_R) = 2 + \gamma v_{\text{right}}(s_0) \end{cases}
 $$
-
 
 $$
 v_{\text{right}}(s_0) = 0 + \gamma (2 + \gamma v_{\text{right}}(s_0)) = 2\gamma + \gamma^2 v_{\text{right}}(s_0)\\ 
@@ -1020,11 +1067,11 @@ $$
 | **$\gamma = 0.5$** | **$\frac{4}{3} \approx 1.33$** | **$\frac{4}{3} \approx 1.33$** |      **两者皆最优**      | 临界均衡点（未来收益折现后刚好抵消即时收益） |
 | **$\gamma = 0.9$** |             $5.26$             |           **$9.47$**           | **$\pi_{\text{right}}$** | 具备远见，为追求长远高回报愿意承受短期牺牲   |
 
-#### $v_*$和$q_*$的互相表示形式(Exercise)
+**$v_*$和$q_*$的互相表示形式(Exercise)**
 
 ---
 
-##### 用 $q_*$ 表示 $v_*$(3.25)
+**用 $q_*$ 表示 $v_*$(3.25)**
 
 $$
 v_*(s) = \max_{a \in \mathcal{A}(s)} q_*(s, a)
@@ -1034,7 +1081,7 @@ $$
 
 ---
 
-##### 用 $v_*$ 和四元概率 $p$ 表示 $q_*$(3.26)
+**用 $v_*$ 和四元概率 $p$ 表示 $q_*$(3.26)**
 
 $$
 q_*(s, a) = \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \Big[ r + \gamma v_*(s') \Big] \\
@@ -1054,7 +1101,7 @@ $$
 
 ---
 
-##### 用 $q_*$ 表示 $\pi_*$(3.27)
+**用 $q_*$ 表示 $\pi_*$(3.27)**
 
 $$
 \pi_*(a \mid s) = \begin{cases} 1, & a = \arg\max\limits_{a' \in \mathcal{A}(s)} q_*(s, a') \\ 0, & \text{其他} \end{cases}
@@ -1064,7 +1111,7 @@ $$
 \pi_*(s) = \arg\max\limits_{a \in \mathcal{A}(s)} q_*(s, a)
 $$
 
-##### 用 $v_*$ 和四元概率 $p$ 表示 $\pi_*$(3.28)
+**用 $v_*$ 和四元概率 $p$ 表示 $\pi_*$(3.28)**
 
 将  3.26 中 $q_*(s, a)$ 的展开式直接代入 $\arg\max$ 中：
 $$
@@ -1081,17 +1128,17 @@ $$
 | **是否依赖环境模型 $p$？** | Model-Free                                                   | Model-Based                                                  |
 | **对实际算法设计的指导**   | **这就是为什么无模型强化学习（如 Q-learning、SARSA、DQN）全部选择去学习 $Q$ 值而不是 $V$ 值！** 只要学出了 $q_*$，即使对真实世界物理规律一无所知，只要在当前状态下挑数值最大的动作去执行就是全局最优！ | 如果只学 $v_*$，要挑出最优动作，智能体必须提前预知“如果我选 $a$，下一状态会按什么概率分布变成 $s'$”。现实中很多复杂场景根本无法获得这个模型。 |
 
-#### 贝尔曼方程和贝尔曼最优方程(Exercise)
+**贝尔曼方程和贝尔曼最优方程(Exercise)**
 
 | 维度           | 普通贝尔曼方程（评估某特定策略 $\pi$）                       | 贝尔曼最优方程（求解全局最优价值 $v_*$）                     |
 | :------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| **目标角色**   | 评价**某一个指定策略 $\pi$** 的优劣程度                      | 寻找**所有可能策略中**最好的天花板表现                       |
+| **目标角色**   | 评价**某一个指定策略 $\pi$** 的优劣程度                      | 寻找**所有可能策略中**最好的上限表现                       |
 | **一句话本质** | **加权平均（求期望）**：当前价值 = 下一步即时奖励与后续价值按策略概率的**加权平均** | **挑出最大的那个（取 $\max$）**：当前价值 = 尝试所有可选动作，取预期回报**最大的那个动作** |
 | **代数性质**   | **线性方程**（可直接矩阵求逆解析解）                         | **非线性方程**（含 $\max$，必须迭代求解）                    |
 
 ---
 
-##### BellmanEquation for $v_\pi$
+**BellmanEquation for $v_\pi$**
 
 **当智能体严格按照策略 $\pi$ 行动时，每个状态的真实长期价值 $v_\pi$ 是多少？**
 $$
@@ -1103,17 +1150,20 @@ $$
 
 ---
 
-##### Bellman Optimality Equation for $v_*$
+**Bellman Optimality Equation for $v_*$**
 
 **不需要指定策略，系统在理论上能够达到的极限最优价值 $v_*$ 是多少？**
+**不需要指定策略，系统在理论上能够达到的极限最优价值 $v_*$ 是多少？**
 $$
-v_*(s) = \max_{a \in \mathcal{A}(s)} \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \Big[ r + \gamma v_*(s') \Big], \quad \forall s \in \mathcal{S} \\
-v_*(s) = \max_{a \in \mathcal{A}(s)} \left[ \sum_{r} p(r \mid s, a)r + \gamma \sum_{s'} p(s' \mid s, a) v_*(s') \right]\\
-v_*(s) = \max_{a \in \mathcal{A}(s)} \mathbb{E} \Big[ R_{t+1} + \gamma v_*(S_{t+1}) \;\Big|\; S_t = s, A_t = a \Big](期望形式) \\
-v_* = \max_{\pi} \left( r_\pi + \gamma P_\pi v_* \right)(矩阵形式/不动点方程，通过值迭代的方式求解)
+\begin{aligned}
+v_*(s) &= \max_{a \in \mathcal{A}(s)} \sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \Big[ r + \gamma v_*(s') \Big], \quad \forall s \in \mathcal{S} \\
+v_*(s) &= \max_{a \in \mathcal{A}(s)} \left[ \sum_{r} p(r \mid s, a)r + \gamma \sum_{s'} p(s' \mid s, a) v_*(s') \right] \\
+v_*(s) &= \max_{a \in \mathcal{A}(s)} \mathbb{E} \Big[ R_{t+1} + \gamma v_*(S_{t+1}) \;\Big|\; S_t = s, A_t = a \Big] \quad\text{(期望形式)} \\
+v_* &= \max_{\pi} \left( r_\pi + \gamma P_\pi v_* \right) \quad\text{(矩阵不动点形式，值迭代求解)}
+\end{aligned}
 $$
 
-##### 概率函数写贝尔曼方程
+**概率函数写贝尔曼方程**
 
 1. **三元概率函数——状态转移概率**：
    $$
@@ -1128,14 +1178,18 @@ $$
 书原本采用四元联合分布 $p(s', r \mid s, a)$。对于任意依赖于下一状态 $s'$ 的价值评估函数 $\text{Val}(s')$，我们利用线性期望性质进行拆分：
 
 $$
-\sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \Big[ r + \gamma \text{Val}(s') \Big] \\
-= \underbrace{\sum_{r \in \mathcal{R}} r \sum_{s' \in \mathcal{S}} p(s', r \mid s, a)}_{\text{根据式 (3.5)，正好等于 } r(s, a)} + \gamma \sum_{s' \in \mathcal{S}} \underbrace{\left(\sum_{r \in \mathcal{R}} p(s', r \mid s, a)\right)}_{\text{根据式 (3.4)，正好等于 } p(s' \mid s, a)} \text{Val}(s')\\
-= \mathbf{r(s, a) + \gamma \sum_{s' \in \mathcal{S}} p(s' \mid s, a) \text{Val}(s')}
+\begin{aligned}
+&\sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \Big[ r + \gamma \operatorname{Val}(s') \Big] \\
+&= \underbrace{\sum_{r \in \mathcal{R}} r \sum_{s' \in \mathcal{S}} p(s', r \mid s, a)}_{\text{式 (3.5): } r(s, a)} \\
+&\quad + \gamma \sum_{s' \in \mathcal{S}} \underbrace{\left(\sum_{r \in \mathcal{R}} p(s', r \mid s, a)\right)}_{\text{式 (3.4): } p(s' \mid s, a)} \operatorname{Val}(s') \\
+&= \mathbf{r(s, a) + \gamma \sum_{s' \in \mathcal{S}} p(s' \mid s, a) \operatorname{Val}(s')}
+\end{aligned}
 $$
 
 ---
 
-###### Bellman Equation for $q_\pi$
+**Bellman Equation for $q_\pi$**
+
 评估在给定策略 $\pi$ 下的动作价值。当前动作 $a$ 已经确定，因此下一状态的价值为后续所有动作的策略加权平均 $\sum_{a'} \pi(a'|s') q_\pi(s', a')$：
 
 $$
@@ -1144,7 +1198,8 @@ $$
 
 ---
 
-###### Bellman Optimality Equation for $q_*$
+**Bellman Optimality Equation for $q_*$**
+
 求解系统的最优动作价值。当前动作 $a$ 已指定，而对下一个状态 $s'$ 允许采取最优决策，即挑选最大的后续动作价值 $\max_{a'} q_*(s', a')$：
 
 $$

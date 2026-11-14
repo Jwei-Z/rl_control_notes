@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 130" width="1600" height="226" style="width:100%;height:auto;max-width:100%;display:block;" font-family="'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif">
+  <defs>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 z" fill="#495057"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 9 1 L 1 5 L 9 9 z" fill="#495057"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="920" height="130" rx="12" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+  <rect x="14" y="14" width="892" height="102" rx="12" fill="#f8f9fa" fill-opacity="0.75" stroke="#495057" stroke-width="1.6" stroke-dasharray="6,4"/>
+  <text x="30" y="40" font-size="14.5" font-weight="700" fill="#212529">非线性系统在平衡工作点附近的雅可比局部线性化四步流程 (§9.2)</text>
+  <rect x="26" y="48" width="198" height="56" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="2"/>
+  <text x="125.0" y="70.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">1. 求解静态平衡工作点</text>
+  <text x="125.0" y="91.5" text-anchor="middle" font-size="13.5" fill="#2b3035">令 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x&#x0307;</tspan> = 0 解出 (<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">0</tspan>, <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">0</tspan>)</text>
+  <rect x="248" y="48" width="198" height="56" rx="10" fill="#fff3bf" stroke="#e67700" stroke-width="2"/>
+  <text x="347.0" y="70.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">2. 定义微扰增量坐标</text>
+  <text x="347.0" y="91.5" text-anchor="middle" font-size="13.5" fill="#2b3035">δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan> = <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan> − <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">0</tspan>,  δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan> = <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan> − <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">0</tspan></text>
+  <rect x="470" y="48" width="206" height="56" rx="10" fill="#ffe8cc" stroke="#d9480f" stroke-width="2"/>
+  <text x="573.0" y="70.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">3. 一阶泰勒展开截断高阶项</text>
+  <text x="573.0" y="91.5" text-anchor="middle" font-size="13.5" fill="#2b3035">计算雅可比偏导矩阵 ∂<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">f</tspan>/∂<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan>, ∂<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">f</tspan>/∂<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan></text>
+  <rect x="700" y="48" width="194" height="56" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="797.0" y="70.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">4. 得线性化增量状态方程</text>
+  <text x="797.0" y="91.5" text-anchor="middle" font-size="13.5" fill="#2b3035">δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x&#x0307;</tspan> = <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">A</tspan> δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan> + <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">B</tspan> δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan></text>
+  <polyline points="224,76 248,76" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="446,76 470,76" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="676,76 700,76" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+</svg>

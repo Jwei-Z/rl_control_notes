@@ -1,26 +1,26 @@
+---
+title: "NVIDIA Isaac Sim 5.1 + Isaac Lab v2.3 环境配置"
+type: setup
+domain: 仿真与环境配置
+aliases:
+  - "IsaacLab环境配置"
+  - "Isaac Lab Setup"
+tags:
+  - setup
+  - simulation
+---
+
 # NVIDIA Isaac Sim 5.1 + Isaac Lab v2.3
 
 > **核心组件**：Ubuntu 22.04 LTS + Python 3.11 + PyTorch 2.7 (cu128) + NVIDIA Isaac Sim 5.1 + Isaac Lab v2.3.x (Core 0.48.0) + RSL-RL 3.0.1 
 > **硬件配置验证**：双卡 NVIDIA GeForce RTX 3090 (24GB × 2) 
-> **前置依赖**：请先按同目录下 [Common Environment.md](file:///E:/Desktop/Documents/Nvidia-Sim/Common%20Environment.md) 修复容器 DNS 解析、Conda 协议与 Pip 镜像源。
+> **前置依赖**：请先按同目录下 [[Common Environment|Common Environment.md]] 修复容器 DNS 解析、Conda 协议与 Pip 镜像源。
 
 ---
 
 ## 一、 关键架构
 
-
-
-```mermaid
-flowchart TD
-    App["应用层: 四足机器人移动/双臂操作策略"]
-    RL["强化学习层: Isaac Lab (当前 v2.3.x / Core 0.48.0) + RSL-RL / RL-Games"]
-    Engine["物理与渲染底座: NVIDIA Isaac Sim 5.1 (Omniverse Kit / PhysX 5 GPU 流)"]
-    Driver["硬件驱动层: NVIDIA 显卡驱动 (CUDA 12.x + Vulkan 1.3 / EGL 硬件加速)"]
-    
-    App --> RL
-    RL --> Engine
-    Engine --> Driver
-```
+![NVIDIA Isaac Sim 5.1 / Isaac Lab v2.3 软件栈架构](image/IsaacLab_arch.svg)
 
 ### 1. Isaac Gym vs Isaac Sim vs Isaac Lab
 - **Isaac Gym (Preview 4)**：已于 2023 年完全停止维护，仅支持 Python 3.7/3.8，无真实渲染器与传感器物理管线；
@@ -43,7 +43,7 @@ pip config set global.timeout 120
 
 ---
 
-## 三、 源码拉取与国内网络透明代理
+## 三、 源码拉取 / 网络透明代理
 
 国内服务器访问 GitHub 极易发生 TLS 握手中断
 
@@ -62,11 +62,11 @@ cd IsaacLab
 
 ---
 
-## 四、 工具链与依赖包避坑
+## 四、 工具链 / 依赖包常见问题
 
 在运行官方安装脚本 `./isaaclab.sh --install` 之前，必须提前修补以下 3 个高频破坏性缺陷：
 
-### 坑 1：Python 伪装 CMake 导致的 C++ 编译崩溃
+### 问题 1：Python 伪装 CMake 导致的编译失败
 - **故障现象**：编译 `egl_probe` 轮子时报 `subprocess.CalledProcessError: Command '['cmake', '--version']' returned non-zero exit status 1`，并在堆栈中出现 `/usr/local/bin/cmake: ModuleNotFoundError: No module named 're'`。
 - **根因分析**：容器内 `/usr/local/bin/cmake` 是一个旧版 pip 安装的 Python 包装脚本。当子进程启动时，由于环境变量路径与 Conda Python 3.11 冲突，导致 cmake 脚本连 Python 内置标准库 `re` 都无法加载直接崩溃。
 - **修复方案**：安装纯 C++ 二进制原生 CMake，并清理环境干扰：
@@ -78,7 +78,7 @@ cd IsaacLab
   unset PYTHONPATH
   ```
 
-### 坑 2：Setuptools >= 70 导致 flatdict 缺少 pkg_resources
+### 问题 2：Setuptools 版本不兼容导致缺少 pkg_resources
 - **故障现象**：安装 `source/isaaclab` 时，构建 `flatdict==4.0.1` 抛出 `ModuleNotFoundError: No module named 'pkg_resources'`。
 - **根因分析**：`flatdict` 的 `setup.py` 依赖已废弃的 `pkg_resources`；而 pip 默认开启构建隔离（`--build-isolation`）在临时环境中拉取了最新版 `setuptools>=70`（已彻底移除该接口）。
 - **修复方案**：锁定 setuptools 版本，并禁用构建隔离直接安装：
@@ -88,7 +88,7 @@ cd IsaacLab
   pip install --no-build-isolation flatdict==4.0.1
   ```
 
-### 坑 3：容器缺失底层 X11 与 OpenGL 共享库
+### 问题 3：容器缺失 X11 / OpenGL 共享库
 - **故障现象**：运行时报错 `libXt.so.6: cannot open shared object file` 以及 `libGLU.so.1: cannot open shared object file`。
 - **修复方案**：安装基础动态链接库与 Vulkan 工具集：
   
@@ -115,7 +115,7 @@ pip install --no-build-isolation -e source/isaaclab
 
 ---
 
-## 五、 Vulkan 驱动缺失与 ERROR_INCOMPATIBLE_DRIVER
+## 五、 Vulkan 驱动缺失 / ERROR_INCOMPATIBLE_DRIVER
 
 这是所有在Docker 容器部署 Isaac Sim 的工程师遇到最多的致命问题。
 
@@ -189,9 +189,9 @@ vulkaninfo --summary
 
 ---
 
-## 七、 无头仿真与四足机器人强化学习自检
+## 七、 无头仿真 / 四足 RL 自检
 
-### 1. 验证 Python 核心组件与 GPU 识别
+### 1. Python 核心组件 / GPU 识别校验
 ```bash
 python -c "import isaaclab; print('Isaac Lab 版本:', isaaclab.__version__)"
 python -c "import torch; print('CUDA 加速状态:', torch.cuda.is_available(), '| GPU 数量:', torch.cuda.device_count())"

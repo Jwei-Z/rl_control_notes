@@ -1,4 +1,16 @@
-# 1. 修复容器 DNS 解析异常与并发丢包（K8s 特有问题）
+---
+title: "容器与网络基础环境修复指南"
+type: setup
+domain: 仿真与环境配置
+aliases:
+  - "容器镜像源"
+  - "Common Environment"
+tags:
+  - setup
+  - simulation
+---
+
+# 1. 修复容器 DNS 解析异常 / 并发丢包（K8s）
 
 - **故障现象**：执行 `conda` 或 `socket.gethostbyname` 时报错 `[Errno -3] Temporary failure in name resolution`。
 
@@ -17,7 +29,7 @@
   EOF
   ```
 
-# 2. 解决 Conda 官方服务条款阻断与换国内源
+# 2. 修复 Conda 服务条款阻断 / 切换国内源
 
 - **故障现象**：报 `CondaToSNonInteractiveError: Terms of Service have not been accepted`，且官方源下载极慢。
 
@@ -48,7 +60,7 @@
   conda create -n GS python=3.10 -y
   ```
 
-# 3. 彻底清除 Pip 中失效的 NGC 源与重试卡顿
+# 3. 清除失效 Pip NGC 源 / 解决重试卡顿
 
 - **故障现象**：每次使用 `pip` 安装时，均出现 `Failed to resolve 'pypi.ngc.nvidia.com'` 并强制重试 5 次，卡顿约 1 分钟。
 
@@ -75,4 +87,3 @@
   timeout = 60
   EOF
   ```
-

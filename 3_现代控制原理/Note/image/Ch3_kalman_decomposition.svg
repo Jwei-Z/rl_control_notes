@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 320" width="1600" height="557" style="width:100%;height:auto;max-width:100%;display:block;" font-family="'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif">
+  <defs>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 z" fill="#495057"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 9 1 L 1 5 L 9 9 z" fill="#495057"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="920" height="320" rx="12" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+  <rect x="14" y="14" width="892" height="292" rx="12" fill="#f8f9fa" fill-opacity="0.75" stroke="#495057" stroke-width="1.6" stroke-dasharray="6,4"/>
+  <text x="30" y="40" font-size="14.5" font-weight="700" fill="#212529">线性系统卡尔曼规范分解 (Kalman Canonical Decomposition) 四子空间信号流向图 (§3.4)</text>
+  <rect x="28" y="130" width="155" height="68" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="2"/>
+  <text x="105.5" y="158.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">控制输入 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">u</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+  <text x="105.5" y="179.5" text-anchor="middle" font-size="13.5" fill="#2b3035">(执行器驱动端)</text>
+  <rect x="255" y="52" width="390" height="54" rx="10" fill="#d3f9d8" stroke="#2b8a3e" stroke-width="2"/>
+  <text x="450.0" y="73.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">子空间 1：<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">co</tspan> — 既能控又能观子空间</text>
+  <text x="450.0" y="94.5" text-anchor="middle" font-size="13.5" fill="#2b3035">传递函数矩阵 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">G</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">s</tspan>) = <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">C</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">s</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">I</tspan> − <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">A</tspan>)⁻¹<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">B</tspan> 唯一能表征的子空间</text>
+  <rect x="255" y="118" width="390" height="48" rx="10" fill="#fff3bf" stroke="#e67700" stroke-width="2"/>
+  <text x="450.0" y="147.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">子空间 2：<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">cō</tspan> — 能控但不能观子空间 (输入可驱动，输出端不可见)</text>
+  <rect x="255" y="178" width="390" height="48" rx="10" fill="#ffe8cc" stroke="#d9480f" stroke-width="2"/>
+  <text x="450.0" y="207.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">子空间 3：<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">c̄o</tspan> — 不能控但能观子空间 (输入推不动，传感器可观测)</text>
+  <rect x="255" y="238" width="390" height="48" rx="10" fill="#ffe3e3" stroke="#e03131" stroke-width="2"/>
+  <text x="450.0" y="267.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">子空间 4：<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">x</tspan><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-size="74%" baseline-shift="sub">c̄ō</tspan> — 既不能控又不能观子空间 (与输入和输出完全解耦)</text>
+  <rect x="720" y="130" width="165" height="68" rx="10" fill="#f3f0ff" stroke="#5f3dc4" stroke-width="2"/>
+  <text x="802.5" y="158.5" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">测量输出 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-weight="700">y</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+  <text x="802.5" y="179.5" text-anchor="middle" font-size="13.5" fill="#2b3035">(传感器感知端)</text>
+  <polyline points="183,150 255,79" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="185.0" y="87.0" width="62.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="216.0" y="102.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">直接驱动</text>
+  <polyline points="183,175 255,142" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="185.0" y="157.0" width="62.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="216.0" y="172.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">直接驱动</text>
+  <polyline points="450,106 450,118" fill="none" stroke="#495057" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-end)"/>
+  <rect x="467.0" y="100.0" width="86.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="510.0" y="115.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">内部单向耦合</text>
+  <polyline points="450,238 450,226" fill="none" stroke="#495057" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-end)"/>
+  <rect x="467.0" y="220.0" width="86.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="510.0" y="235.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">内部单向耦合</text>
+  <polyline points="645,79 720,150" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="651.0" y="87.0" width="74.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="688.0" y="102.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">传感器捕获</text>
+  <polyline points="645,202 720,175" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="651.0" y="189.0" width="74.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="688.0" y="204.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">传感器捕获</text>
+</svg>

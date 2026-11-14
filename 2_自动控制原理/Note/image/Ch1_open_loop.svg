@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 145" width="1600" height="264" style="width:100%;height:auto;max-width:100%;display:block;" font-family="'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif">
+  <defs>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 z" fill="#495057"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 9 1 L 1 5 L 9 9 z" fill="#495057"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="145" rx="12" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+  <rect x="24" y="58" width="130" height="52" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="2"/>
+  <text x="89.0" y="89.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">给定参考输入 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">r</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+  <rect x="198" y="58" width="160" height="52" rx="10" fill="#fff3bf" stroke="#e67700" stroke-width="2"/>
+  <text x="278.0" y="89.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">控制器 / 控制装置</text>
+  <rect x="402" y="58" width="140" height="52" rx="10" fill="#ffe8cc" stroke="#d9480f" stroke-width="2"/>
+  <text x="472.0" y="89.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">执行机构</text>
+  <rect x="586" y="58" width="140" height="52" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="656.0" y="89.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">被控对象 Plant</text>
+  <rect x="770" y="58" width="90" height="52" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
+  <text x="815.0" y="89.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">输出 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">y</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+  <polyline points="154,84 198,84" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="358,84 402,84" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="364.0" y="60.0" width="32.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="380.0" y="75.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057"><tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">u</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+  <polyline points="542,84 586,84" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="726,84 770,84" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="656,18 656,58" fill="none" stroke="#c92a2a" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-end)"/>
+  <rect x="608.0" y="11.0" width="96.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="656.0" y="26.0" text-anchor="middle" font-size="13" font-weight="600" fill="#c92a2a">外部扰动 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">w</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+</svg>

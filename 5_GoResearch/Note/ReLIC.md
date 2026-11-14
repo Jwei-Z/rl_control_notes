@@ -1,4 +1,30 @@
+---
+title: Versatile Loco-Manipulation through Flexible Interlimb Coordination (ReLIC)
+type: paper
+institution: Boston Dynamics AI Institute (RAI), UC Berkeley, Cornell University
+venue: CoRL 2025 (arXiv:2506.07876)
+year: 2025
+domain: RL移动操作
+aliases:
+  - ReLIC
+  - 柔性肢体协调移动操作
+tags:
+  - paper
+  - loco-manipulation
+  - rl
+  - isaaclab
+prerequisites:
+  - "[[马尔可夫决策过程MDP]]"
+  - "[[Sim2Real与特权学习]]"
+  - "[[雅可比矩阵与微分逆运动学]]"
+  - "[[分层全身控制WBC与HQP]]"
+  - "[[支撑多边形与ZMP存活性]]"
+  - "[[库仑摩擦锥与半正定松弛]]"
+---
+
 # Versatile Loco-Manipulation through Flexible Interlimb Coordination (ReLIC)
+
+**核心思路**：打破“腿只走路、臂只拿物”的死板分工，提出**可切换角色掩码 $\mathbf{m}_e$ + 腿部/基座自适应 RL 平衡底座 + [[雅可比矩阵与微分逆运动学|可微 IK 精密操作分支]] + 四阶段课程学习**，实现三足奔跑单腿踢球、推门、躯干辅助抓重物。
 
 > * **研究机构**：Boston Dynamics AI Institute (RAI), UC Berkeley, Cornell University
 > * **发表出处**：arXiv:2506.07876v2 [cs.RO], Jun 2025 (CoRL 2025)
@@ -10,9 +36,24 @@
 
 ---
 
+## 全文工作流程
+
+以下给出任务解析、全身逆运动学、模型化操作（MB）与强化学习自平衡（RL）双通道融合的闭环数据流图及各阶段对照表：
+
+![ReLIC 角色掩码双通道融合流水线](image/ReLIC_workflow.svg)
+
+| 阶段 | 频率 | 输入 | 核心方法 / 方程 | 输出 | 章节 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **阶段 1：多模态任务解析 / 全身 IK** | 异步 / 规划周期 | 语言指令 / RGB-D 点云 / 轨迹、当前关节角 $\mathbf{q}_t$ | GPT-4o + SAM 2 接触点提取、全身逆运动学优化躯干可达空间 | 角色掩码 $\mathbf{m}_t \in \{0,1\}^5$、躯干目标 $\tau_t^{\text{torso}} \in \text{SE}(3)$、操作目标 $\tau_t^\lambda \in \text{SE}(3)$ | §3.1, §3.4 |
+| **阶段 2：模型化操作解算（MB 通道）** | 50 Hz | 操作目标 $\mathbf{x}_{\text{des}}^\lambda, \dot{\mathbf{x}}_{\text{des}}^\lambda$、关节状态 $\mathbf{q}_t^\lambda$ | [[雅可比矩阵与微分逆运动学]]：$\dot{\mathbf{q}}_{\text{MB}}^\lambda = \mathbf{J}^\dagger(\dot{\mathbf{x}}_{\text{des}}^\lambda + \mathbf{K}_p \Delta \mathbf{x}^\lambda) + (\mathbf{I} - \mathbf{J}^\dagger\mathbf{J})\dot{\mathbf{q}}_0$ | 操作肢体关节角度指令 $\mathbf{a}_{\text{MB}, t} \in \mathbb{R}^{19}$ | §3.2.1 |
+| **阶段 3：自适应移动平衡（RL 通道）** | 50 Hz | 观测 $o_t$（速度指令、躯干误差 $\Delta \mathbf{p}^{\text{torso}}, \Delta \mathbf{R}^{\text{torso}}$、投影重力 $\mathbf{g}^{\text{proj}}$、掩码 $\mathbf{m}_t$） | 四阶段课程学习 PPO 自平衡策略网络 $\pi_{\text{RL}}(o_t)$ | 支撑肢体平衡步态指令 $\mathbf{a}_{\text{RL}, t} \in \mathbb{R}^{19}$ | §3.2.2, §3.3 |
+| **阶段 4：双通道掩码融合 / 执行** | 50 Hz / 1 kHz | $\mathbf{a}_{\text{MB}, t}, \mathbf{a}_{\text{RL}, t}, \mathbf{m}_t$ | 哈达玛逐元素乘积融合：$\mathbf{a}_t = \mathbf{m}_t \odot \mathbf{a}_{\text{MB}, t} + (\mathbf{1} - \mathbf{m}_t) \odot \mathbf{a}_{\text{RL}, t}$ | 19 维全身关节位置 $\mathbf{a}_t \in \mathbb{R}^{19}$ 下发 PD 伺服 | §3.1 |
+
+---
+
 ## 1 Introduction
 
-### 1.1 研究背景与问题定义
+### 1.1 研究背景
 在非结构化动态环境中，自主机器人必须同时具备敏捷的移动能力与精细的环境交互操作能力，即**移动操作（Loco-Manipulation）**。对于配备机械臂的四足机器人，其本体拥有多条高自由度活动肢体（4 条腿 + 1 条机械臂共 19 个自由度），理论上具备极为广阔的工作空间和动作冗余度。
 
 然而，现存的移动操作范式普遍存在一个**预设的刚性角色分工假设**：
@@ -25,15 +66,15 @@
    * 将控制硬拆分为机械臂轨迹跟踪与底盘基座导航，二者通过启发式状态机简单切换。这种方案缺乏底盘与操作肢体之间的全身动力学闭环补偿，一旦机械臂接触重物产生外力矩，底盘极易倾覆。
 2. **基于模型的全身模型预测控制**：
    * 依赖精确的机器人与环境几何接触模型。但在多肢体接触切换时，离散接触顺序会导致巨大的**混合整数规划组合爆炸**，难以在板载计算平台上实现数十赫兹的实时闭环；且对未建模外力、地面打滑非常脆弱。
-3. **单体端到端强化学习**：
+3. **单体端到端[[马尔可夫决策过程MDP|强化学习]]**：
    * 试图用单一策略网络直接输出全部 19 个关节指令。
    * **致命缺陷**：操作任务要求的“毫米级末端几何跟踪精度”与移动自平衡要求的“米级大范围高动态鲁棒性”存在本质上的**多目标梯度冲突**。网络极易退化为保守步态，操作精度低下，且 Sim-to-Real 迁移难度巨大。
 
-### 1.3 ReLIC 的核心贡献与创新思想
+### 1.3 核心贡献
 针对上述瓶颈，论文提出了 **ReLIC（Reinforcement Learning for Interlimb Coordination）**，其核心思想是：**打破“手”与“脚”的固有界限，将机器人的所有肢体抽象为可在操作与移动支撑之间动态任意重构的通用执行机构。**
 
 本文的主要贡献包括：
-1. **统一的任务与控制分层抽象**：提出基于**角色掩码 $m \in \{0, 1\}^{|\Lambda|}$** 与**末端目标位姿 $\tau^\lambda$** 的通用任务表示，并在控制层采用**“模型化高精度操作控制器 + 强化学习自适应移动平衡策略”**的混合互补控制架构。
+1. **统一的任务与控制分层抽象**：提出基于**角色掩码 $m \in \{0, 1\}^{|\Lambda|}$** 与**末端目标位姿 $\tau^\lambda$** 的通用任务表示，并在控制层采用 **“模型化高精度操作控制器 + [[马尔可夫决策过程MDP|强化学习]]自适应移动平衡策略”** 的混合互补控制架构。
 2. **自适应多肢体协调步态学习**：在 Isaac Lab 仿真中通过强化学习训练通用移动策略，使其能够在四足行走、三足支撑、甚至操作肢体施加剧烈外力扰动时，自适应生成稳定步态并平滑过渡。
 3. **高泛化多模态任务接口**：支持直接末端轨迹、空间交互接触点、以及基于 VLM（GPT-4o + SAM 2）的零样本自然语言指令输入。
 4. **真实物理系统充分验证**：在波士顿动力 Spot + Spot Arm 实体机器人上完成了涵盖**足部辅助操作**、**静态多肢体协调**与**动态移动协调**三大类共 12 种极具挑战性的物理任务。
@@ -47,7 +88,7 @@
 * **解耦/分层架构**：通常将上身机械臂规划为操作器，将四足底盘视为浮动基座。此类方法难以在极端姿态下利用腿部力量协助操作，且难以应对接触时的反作用力冲击。
 * **全身端到端学习**：近年来许多学者尝试使用全 RL 解决全身协调。然而单一策略网络难以同时学习高精度操作与动态稳定性，在面对接触式任务时往往发生末端抖动或步态失稳。
 
-### 2.2 肢体协调与足部操作
+### 2.2 多肢体协调 / 足部操作
 * 生物学观察表明，哺乳动物与灵长类动物在面对复杂交互场景时，能极其自然地利用后肢支撑、前肢甚至单后肢参与环境操控（如踢门、踩踏、推移重物）。
 * 早期机器人研究曾尝试通过离线轨迹优化或预设接触时序来让腿式机器人用单腿踹门或推箱子，但这些方法均**硬编码了特定的肢体角色与固定的接触时序**，无法泛化到新任务，更不能在任务执行中按需任意切换肢体功能。
 * **ReLIC 与以往工作的本质区别**：ReLIC 不对任何肢体的角色进行硬编码，允许机械臂与任意一条腿在任意时刻被动态指派为操作器或支撑腿，实现了真正通用的多肢体灵活协调。
@@ -60,9 +101,10 @@
 
 ReLIC 采用了优雅清晰的“任务层（Task Level）— 控制层（Command Level）”两层分层架构：
 
-![Figure 2: Overview of ReLIC 架构图（任务层输入解耦、全身逆运动学、模型化操作控制器与自适应移动平衡策略融合）](image/ReLIC_overview.png)
+![Figure 2: Overview of ReLIC 架构图（任务层输入解耦、全身 IK、模型操作控制器及自适应平衡策略）](image/ReLIC_overview.png)
 
-#### 1. 肢体集合与角色分配掩码（Task-Level）
+**1. 肢体集合与角色分配掩码（Task-Level）**
+
 设机器人全部可用肢体的集合为 $\Lambda$：
 $$
 \Lambda = \{\lambda_{\text{Arm}}, \lambda_{\text{FL}}, \lambda_{\text{FR}}, \lambda_{\text{HL}}, \lambda_{\text{HR}}\}, \quad |\Lambda| = 5
@@ -72,21 +114,23 @@ $$
 在离散时间步 $t$，引入二进制角色分配掩码向量 $\mathbf{m}_t \in \{0, 1\}^{|\Lambda|}$：
 $$
 m_t(\lambda) = \begin{cases} 
-1, & \text{若肢体 } \lambda \text{ 在当前时刻被指派为执行操作任务（Manipulation）} \\
-0, & \text{若肢体 } \lambda \text{ 在当前时刻被指派为执行移动支撑（Locomotion）}
+1, & \text{肢体 }\lambda\text{ 执行操作 (Manipulation)} \\
+0, & \text{肢体 }\lambda\text{ 执行移动 (Locomotion)}
 \end{cases}
 $$
 
-#### 2. 目标位姿与躯干逆运动学解算
+**2. 目标位姿与躯干逆运动学解算**
+
 * 对于分配为操作角色的肢体（$m_t(\lambda) = 1$），上层指定其末端执行器的期望 6-DoF 空间位姿目标 $\tau^\lambda \in \text{SE}(3)$。
 * 对于负责移动平衡的肢体（$m_t(\lambda) = 0$），其末端落足目标**完全不预先指定**，完全交由底层的自适应策略自主决策。
-* 基于操作肢体的末端目标 $\tau^\lambda$，系统通过全身逆运动学求解机身躯干的最优目标位姿 $\tau^{\text{torso}} \in \text{SE}(3)$，使操作肢体处于最佳可达工作空间内：
+* 基于操作肢体的末端目标 $\tau^\lambda$，系统通过全身[[分层全身控制WBC与HQP|逆运动学]]求解机身躯干的最优目标位姿 $\tau^{\text{torso}} \in \text{SE}(3)$，使操作肢体处于最佳可达工作空间内：
 $$
 \tau_t = \{\tau^{\text{torso}}_t\} \cup \{\tau^\lambda_t \mid \lambda \in \Lambda, m_t(\lambda) = 1\}
 $$
 在时域长度为 $T$ 的任务中，任务层的全局抽象即为时序序列 $\{\tau_t, \mathbf{m}_t\}_{t=0}^{T-1}$。
 
-#### 3. 控制层双通道执行与动作掩码融合（Command Level）
+**3. 控制层双通道执行与动作掩码融合（Command Level）**
+
 在控制层，ReLIC 设立两条高度分工、优势互补的并行执行通道（以 50 Hz 周期同步运行）：
 1. **模型化操作控制器（Model-Based Controller, MB）**：负责跟踪操作肢体的末端位姿，输出高精度的操作关节动作 $\mathbf{a}_{\text{MB}}$。
 2. **自适应移动强化学习策略（Adaptive Locomotion Policy, RL）**：观测机器人实时状态与机身目标，自适应生成支撑肢体的移动平衡动作 $\mathbf{a}_{\text{RL}}$。
@@ -98,14 +142,14 @@ $$
 
 ---
 
-#### 4. 全系统分层控制执行流水线全景图
+**4. 全系统分层控制执行流水线全景图**
 
-##### 架构核心层级、运行频率与软硬件分配
+**架构核心层级、运行频率与软硬件分配**
 
-| 架构层级 | 运行频率 | 核心模块 / 算法 | 输入核心物理量 | 输出核心物理量 | 硬件载体 |
+| 层级 | 频率 | 核心模块 | 输入 | 输出 | 硬件 |
 | :--- | :---: | :--- | :--- | :--- | :--- |
 | **层级 1：任务输入层** | 异步触发 / 低频更新 | GPT-4o 语义解析 + SAM 2 实例分割 / 交互标定 | 自然语言、RGB-D 空间彩色点云、用户接触点 | 初始角色分配、交互目标三维点云与表面法向量 | 机载 Jetson Orin / 上位机 |
-| **层级 2：任务抽象层** | 异步触发 / 规划周期 | 任务解释器 + 全身逆运动学 | 目标三维接触几何、时序航点 | 角色掩码序列 $\mathbf{m}_t$、躯干最优位姿 $\tau^{\text{torso}}$、操作末端目标 $\tau^\lambda$ | Intel Core i7 工控机 |
+| **层级 2：任务抽象层** | 异步触发 / 规划周期 | 任务解释器 + 全身[[分层全身控制WBC与HQP\|逆运动学]] | 目标三维接触几何、时序航点 | 角色掩码序列 $\mathbf{m}_t$、躯干最优位姿 $\tau^{\text{torso}}$、操作末端目标 $\tau^\lambda$ | Intel Core i7 工控机 |
 | **层级 3：控制执行层 (MB 通道)** | **50 Hz** 同步闭环 | 微分逆运动学  + 笛卡尔空间阻抗控制 | 操作末端目标 $\tau^\lambda$、躯干位姿 $\tau^{\text{torso}}$、关节状态 $\mathbf{q}_t$ | 操作肢体 19 维前馈关节角度指令 $\mathbf{a}_{\text{MB}}$ | Intel Core i7 工控机 |
 | **层级 3：控制执行层 (RL 通道)** | **50 Hz** 同步闭环 | Isaac Lab PPO 训练的多模态自平衡神经网络 | 躯干位姿误差、掩码 $\mathbf{m}_t$、IMU 角速度、关节编码器 | 支撑肢体 19 维移动自平衡关节指令 $\mathbf{a}_{\text{RL}}$ | ONNX Runtime (CPU/GPU) |
 | **底层硬件执行** | **50 Hz / 1 kHz** | 电机底层位置伺服闭环 | 哈达玛积融合动作 $\mathbf{a}_t = \mathbf{m}_t \odot \mathbf{a}_{\text{MB}} + (\mathbf{1}-\mathbf{m}_t) \odot \mathbf{a}_{\text{RL}}$ | 19 个执行器力矩输出驱动机械臂与四腿 | Spot 底层驱动板 |
@@ -114,12 +158,14 @@ $$
 
 ### 3.2 Adaptive Control for Flexible Interlimb Coordination
 
-#### 1. 模型化操作控制器（Model-Based Controller $\mathbf{a}_{\text{MB}}$）
-针对被分配为操作的肢体（$m(\lambda) = 1$），精度与接触顺应性是首要目标。ReLIC 利用已知精确的机器人运动学与动力学刚体模型，采用**微分逆运动学（Differential IK）结合阻抗控制**求解：
+**1. 模型化操作控制器（Model-Based Controller $\mathbf{a}_{\text{MB}}$，[[雅可比矩阵与微分逆运动学]]）**
+
+针对被分配为操作的肢体（$m(\lambda) = 1$），精度与接触顺应性是首要目标。ReLIC 利用已知精确的机器人运动学与动力学刚体模型，采用 **[[雅可比矩阵与微分逆运动学|微分逆运动学（Differential IK）]]结合阻抗控制**求解：
 $$
 \dot{\mathbf{q}}^\lambda_{\text{MB}} = \mathbf{J}^{\dagger}(\mathbf{q}^\lambda) \Big( \dot{\mathbf{x}}^\lambda_{\text{des}} + \mathbf{K}_p (\mathbf{x}^\lambda_{\text{des}} - \mathbf{x}^\lambda) \Big) + (\mathbf{I} - \mathbf{J}^\dagger \mathbf{J}) \dot{\mathbf{q}}_0
 $$
-##### 核心数学与物理机理深度拆解：
+
+**核心数学与物理机理深度拆解：**
 
 > **（1）雅可比矩阵 $\mathbf{J}$**
 >
@@ -160,14 +206,18 @@ $$
 
 ---
 
-#### 2. 自适应移动平衡策略（Adaptive Locomotion Policy $\pi_{\text{RL}}$）
+**2. 自适应移动平衡策略（Adaptive Locomotion Policy $\pi_{\text{RL}}$）**
+
 负责其余肢体（$m(\lambda) = 0$）的强化学习策略 $\pi_{\text{RL}}$ 必须在无需显式重规划落足点的情况下，动态感知哪个肢体被“抽离”去操作，并自动调节剩下的肢体（如三腿站立、三腿行走或四腿奔跑）以维持机身稳定。
 
-##### （1）策略观测空间 $o_t$ 逐项核心参数详解
+**（1）策略观测空间 $o_t$ 逐项核心参数详解**
 
 论文中输入给 PPO 策略网络的观测向量 $o_t$ 定义如下：
 $$
-o_t = \Big[ \mathbf{v}_{\text{base}}^{\text{target}}, \boldsymbol{\omega}_{\text{base}}^{\text{target}}, \Delta \mathbf{p}^{\text{torso}}, \Delta \mathbf{R}^{\text{torso}}, \boldsymbol{\omega}_{\text{base}}^{\text{curr}}, \mathbf{g}^{\text{proj}}, \mathbf{q}_t, \dot{\mathbf{q}}_t, \mathbf{a}_{t-1}, \mathbf{m}_t \Big]
+o_t = \begin{bmatrix}
+\mathbf{v}_{\text{base}}^{\text{target}}, \; \boldsymbol{\omega}_{\text{base}}^{\text{target}}, \; \Delta \mathbf{p}^{\text{torso}}, \; \Delta \mathbf{R}^{\text{torso}}, \; \boldsymbol{\omega}_{\text{base}}^{\text{curr}}, \\
+\mathbf{g}^{\text{proj}}, \; \mathbf{q}_t, \; \dot{\mathbf{q}}_t, \; \mathbf{a}_{t-1}, \; \mathbf{m}_t
+\end{bmatrix}
 $$
 
 各参数的物理意义、数学维度及对强化学习策略的作用剖析如下：
@@ -187,7 +237,7 @@ $$
 
 ---
 
-##### （2）多模态自适应奖励函数 $r_t$ 结构与参数详解
+**（2）多模态自适应奖励函数 $r_t$ 结构与参数详解**
 
 强化学习总奖励函数由四大模块加权求和构成：
 $$
@@ -213,10 +263,11 @@ $$
 
 ### 3.3 Learning Transferrable Policy in Simulation
 
-#### 1. 高吞吐仿真与大规模域随机化
+**1. 高吞吐仿真与大规模域随机化**
+
 策略在基于 GPU 加速的 **Isaac Lab** 物理仿真环境中进行端到端 PPO 训练，并行运行 4096 个实例。为了使训练出的策略免去微调直接零样本迁移到真实 Spot 机器人上，实施了全方位的物理参数域随机化：
 
-| 物理随机化参数 | 随机化范围 | 物理意义与现实应对 |
+| 随机化参数 | 随机化范围 | 物理意义 |
 | :--- | :---: | :--- |
 | **机身质量扰动（Base Mass）** | $[-3.0, +3.0]\text{ kg}$ | 适应搭载不同末端夹爪、传感器及载荷 |
 | **质心偏移（CoM Offset）** | $[-5.0, +5.0]\text{ cm}$ (各轴独立) | 机械臂展开与抓持外物时的巨大重心偏移 |
@@ -225,10 +276,12 @@ $$
 | **控制延迟（Latency）** | $[0, 20]\text{ ms}$ 离散随机延迟 | 弥补板载工控机计算与总线通信延迟 |
 | **传感器噪声（Sensor Noise）** | IMU、编码器注入高斯白噪声 | 增强在真实硬件测量噪声下的抗扰能力 |
 
-#### 2. 离线拒绝采样
+**2. 离线拒绝采样**
+
 随机生成的目标位姿可能导致机械臂奇异点或动力学不可行（例如要求机器人在单侧两足悬空状态下大范围移动）。系统在训练前离线采样了超过 $10^7$ 个候选基座状态指令，利用运动学与动力学边界过滤掉不可行解，确保策略在高质量可达状态分布上高效收敛。
 
-#### 3. 执行器非线性校准
+**3. 执行器非线性校准**
+
 真实 Spot 机器人的膝关节采用了高度非线性的高功率密度执行器，其在高扭矩、高转速工况下的动力学行为与仿真中简化的理想力矩电机存在显著差距。
 * 研究团队在真实 Spot 机器人上记录了极端工况下的关节运行轨迹；
 * 采用**协方差矩阵自适应进化策略**在线下优化电机的有效转矩-转速限制曲线与非线性摩擦阻尼参数，使 Isaac Lab 中的虚拟执行器响应与真实电机的均方根误差降低了 **64%**，彻底攻克了腿部高载荷支撑下的 Sim-to-Real 鸿沟。
@@ -239,15 +292,7 @@ $$
 
 为了让用户能够便捷地向系统下达高层意图，ReLIC 提供了三级递进式跨模态交互接口：
 
-```
-跨模态用户输入
-  ├── 1. 直接目标输入 (Direct Target): 用户或轨迹规划器直接指定时序 6D 航点 {τ_t, m_t}
-  ├── 2. 交互式接触点 (Contact Points): 空间 3D 接触点标注 -> 逆向计算接近向量与肢体分配
-  └── 3. 自然语言指令 (Language Instructions):
-         └── GPT-4o (语义分解 + 肢体角色决策)
-               └── SAM 2 (目标物体实例分割 + RGB-D 点云三维接地)
-                     └── 全身运动规划器 (生成轨迹序列 {τ_t, m_t})
-```
+![ReLIC 三种跨模态任务指令接口 / 统一抽象转换](image/ReLIC_inputs.svg)
 
 1. **直接目标输入（Direct Target Specification）**：
    * 适用于专家用户或高层路径规划算法，直接输入末端执行器 6D 位姿序列和二进制掩码。
@@ -272,33 +317,38 @@ $$
 
 ### 4.2 指标
 
-#### 4.2.1 Train 
-| 指标完整 Tag | 数学定义 | 作用 | 本次实验实测终值 |
+**4.2.1 Train**
+
+| 指标 Tag | 数学定义 | 作用 | 实测终值 |
 | :--- | :--- | :--- | :---: |
 | `Train/mean_reward` | $\frac{1}{N}\sum_{i=1}^N R_i$<br/>4096 个环境中单回合累积总奖励的平均值。 | **强化学习的核心优化标的**。反映小狗在保持平衡、跟踪指令以及避免摔倒等综合任务下的整体表现。 | **+29.53**<br/>（从早期的 -50 剧烈负分反弹收敛） |
 | `Train/mean_reward/time` | 随真实物理时间轴记录的 `mean_reward`。 | 评估训练效率，观察单位时间内的回报收益增长斜率。 | **+29.53** |
 | `Train/mean_episode_length` | $\frac{1}{N}\sum_{i=1}^N T_i$<br/>单回合平均存活时间步长（仿真单步步长 $\Delta t = 0.02\text{ s}$，单回合时间上限为 300 步即 $6\text{ s}$）。 | 反映机身稳定性。初期秒摔时仅有 10~20 步；当小狗学会奔跑后，能够持续稳定奔跑直至触发超时截断。 | **272.76 步** |
 | `Train/mean_episode_length/time` | 随真实物理时间轴记录的平均存活步长。 | 用于横向对比不同算力硬件下的策略存活收敛速度。 | **272.76 步** |
 
-#### 4.2.2 Loss （PPO 神经网络训练损失）
-| 指标完整 Tag | 数学定义 | 作用 | 本次实验实测终值 |
+**4.2.2 Loss （PPO 神经网络训练损失）**
+
+| 指标 Tag | 数学定义 | 作用 | 实测终值 |
 | :--- | :--- | :--- | :---: |
 | `Loss/value_function` | $\mathcal{L}_{\text{val}} = \frac{1}{B}\sum (V_\phi(s) - R)^2$<br/>Critic 网络对状态价值估算的未归一化均方误差。 | 衡量 Critic 网络预测未来累积折扣回报的准确程度。由于回报尺度随存活时间暴增数十倍，其绝对 MSE 呈现健康的上升并稳定。 | **1.2967** |
 | `Loss/surrogate` | $\mathcal{L}_{\text{surr}} = -\frac{1}{B}\sum \min(r_t A_t, \text{clip}(r_t) A_t)$<br/>Actor 策略剪切代理损失。 | PPO 核心策略梯度更新量。始终维持在负值区间，策略持续朝正向优势方向单调提升。 | **-0.0061** |
 | `Loss/entropy` | $\mathcal{H} = \sum_{j=1}^{12} (\ln \sigma_j + \frac{1}{2}\ln(2\pi e))$<br/>12/18 维连续动作高斯分布的总微分熵。 | 表征动作探索的随机性。早期为求生存紧急收紧动作方差导致熵骤降；随后在熵正则奖励驱动下反弹并稳定在高位，保障策略的阻尼顺应性。 | **17.5925** |
 | `Loss/learning_rate` | PPO 优化器的实时自适应学习率 $\eta$。 | 由自适应 KL 散度调度器动态调控（目标 $\text{KL} = 0.01$）。步长过大时除以 1.5 刹车，步长保守时乘以 1.5 提速，彻底杜绝策略崩塌。 | **$1.50 \times 10^{-5}$**<br/>（从 $1\times 10^{-3}$ 自适应退火） |
 
-#### 4.2.3 Episode_Reward 
-##### （1）Tracking Rewards
-| 指标完整 Tag | 权重配置 | 数学定义 | 本次实验实测终值 |
+**4.2.3 Episode_Reward**
+
+**（1）Tracking Rewards**
+
+| 指标 Tag | 权重 | 数学定义 | 实测终值 |
 | :--- | :---: | :--- | :---: |
 | `Episode_Reward/track_lin_vel_xy_exp` | **+7.0** | $\exp\big(-\frac{\|\mathbf{v}_{xy} - \mathbf{v}_{xy}^{\text{cmd}}\|^2}{0.25}\big)$<br/>底盘水平线速度跟踪高斯指数奖励。误差越接近 0 奖励越逼近权重上限。 | **+1.6309** |
 | `Episode_Reward/track_ang_vel_z_exp` | **+3.5** | $\exp\big(-\frac{(\omega_z - \omega_z^{\text{cmd}})^2}{0.25}\big)$<br/>偏航旋转角速度跟踪高斯指数奖励。引导底盘敏捷转弯对齐期望航向。 | **+0.7181** |
 | `Episode_Reward/track_base_orientation_l2` | **-7.0** | $-\|\mathbf{g}_{\text{proj}} - [0, 0, -1]^T\|^2$<br/>躯干重力投影偏差 L2 惩罚。强迫底盘在运动中保持躯干水平，严禁剧烈侧翻。 | **-0.1220** |
 | `Episode_Reward/track_base_height_l2` | **-3.5** | $-(z_{\text{base}} - z_{\text{nominal}})^2$<br/>机身离地高度偏差 L2 惩罚。强迫底盘质心维持在离地标称高度，防止塌陷蹲地。 | **-0.0235** |
 
-##### （2）Gait & Contact Rewards
-| 指标完整 Tag | 权重配置 | 数学定义 | 本次实验实测终值 |
+**（2）Gait & Contact Rewards**
+
+| 指标 Tag | 权重 | 数学定义 | 实测终值 |
 | :--- | :---: | :--- | :---: |
 | `Episode_Reward/flight_penalty` | **-5.0** | $-\mathbb{I}(\text{contact\_feet} < 3)$<br/>危险腾空惩罚。当与地面保持稳定接触的足端数量 $<3$ 时触发，防止倾覆。 | **-0.1529** |
 | `Episode_Reward/foot_slip` | **-0.5** | $-\sum_{i \in \text{contact}} \|\mathbf{v}_{xy}^{\text{foot}, i}\|^2$<br/>足端触地打滑速度惩罚。强迫落足瞬间在地面牢牢“抓地咬死”，消除脚底抹油。 | **-0.2106** |
@@ -310,8 +360,9 @@ $$
 | `Episode_Reward/gait` | **0.0**<br/>*(Phase 4 启用)* | 四足对角小跑经典相位接触奖励。 | **0.0000** |
 | `Episode_Reward/three_leg_gait` | **0.0**<br/>*(Phase 4 启用)* | 三足支撑工况下的周期循环弹跳步态奖励。 | **0.0000** |
 
-##### （3）Regularization & Smoothness
-| 指标完整 Tag | 权重配置 | 数学定义 | 本次实验实测终值 |
+**（3）Regularization & Smoothness**
+
+| 指标 Tag | 权重 | 数学定义 | 实测终值 |
 | :--- | :---: | :--- | :---: |
 | `Episode_Reward/joint_energy` | **+2.0** | $\sum_{j} \max(0, -\tau_j \dot{q}_j)$<br/>再生制动与能量回收奖励。激励策略利用动力学惯性自然摆腿省电。 | **+0.0202** |
 | `Episode_Reward/dof_torques_l2` | **-1.0e-5** | $-\sum_{j} \tau_j^2$<br/>关节驱动力矩 L2 惩罚。抑制大电流堵转，降低电机发热风险。 | **-0.0190** |
@@ -319,15 +370,17 @@ $$
 | `Episode_Reward/action_rate_l2` | **-0.01** | $-\|\mathbf{a}_t - \mathbf{a}_{t-1}\|^2$<br/>相邻控制步目标关节角变化率惩罚。**Sim-to-Real 核心**：杜绝实机电机高频振颤。 | **-0.1171** |
 | `Episode_Reward/dof_torque_limits_l2` | **0.0**<br/>*(Phase 4 启用)* | $-\sum \max(0, |\tau_j| - \tau_{\text{limit}})^2$<br/>关节峰值力矩软越限惩罚。 | **0.0000** |
 
-#### 4.2.4 Episode_Termination
-| 指标完整 Tag | 物理定义 | 含义 | 本次实验实测终值 |
+**4.2.4 Episode_Termination**
+
+| 指标 Tag | 物理定义 | 含义 | 实测终值 |
 | :--- | :--- | :--- | :---: |
 | `Episode_Termination/base_contact` | 机身主躯干（Base）与地面发生刚性接触。 | **致命倾覆摔倒判据**。触发环境立刻重置并施加大额负回报。收敛后摔倒大幅下降。 | **0.5525** |
 | `Episode_Termination/undesired_ground_contact` | 非足端刚体（如大腿关节 `uleg`、小腿上段）触地。 | **姿态失稳变形判据**。防止小狗学会畸形跪地滑行等局部劣质步态。 | **0.4135** |
 | `Episode_Termination/time_out` | 仿真时间步长达到单回合最大步数（300 步）。 | **健康存活截断判据**。该数值上升标志着小狗已经能够平稳长途行走。 | **0.0367** |
 
-#### 4.2.5 Metrics
-| 指标完整 Tag | 量测单位 | 含义 | 本次实验实测终值 |
+**4.2.5 Metrics**
+
+| 指标 Tag | 单位 | 含义 | 实测终值 |
 | :--- | :---: | :--- | :---: |
 | `Metrics/base_velocity/error_vel_xy` | $\text{m/s}$ | 底盘水平线速度与期望指令的平均欧氏绝对误差 $\|\mathbf{v}_{xy} - \mathbf{v}_{xy}^{\text{cmd}}\|$。 | **0.1060 m/s** |
 | `Metrics/base_velocity/error_vel_yaw` | $\text{rad/s}$ | 底盘偏航旋转角速度与期望转向指令的绝对误差 $|\omega_z - \omega_z^{\text{cmd}}|$。 | **0.1470 rad/s** |
@@ -336,20 +389,23 @@ $$
 | `Metrics/arm_leg_joint/base_roll_pitch_error` | $\text{rad}$ | 躯干水平面倾角误差（滚转与俯仰）。 | **0.2911 rad**<br/>（约 $16.6^\circ$ 倾角） |
 | `Metrics/arm_leg_joint/base_height_error` | $\text{m}$ | 躯干绝对离地高度与标称值偏差。 | **0.1260 m** |
 
-#### 4.2.6 Curriculum
-| 指标完整 Tag | 取值区间 | 物理机制与演变趋势 | 本次实验实测终值 |
+**4.2.6 Curriculum**
+
+| 指标 Tag | 取值区间 | 机制趋势 | 实测终值 |
 | :--- | :---: | :--- | :---: |
 | `Curriculum/terrain_levels` | $[0.0, 1.0]$ | Isaac Lab 自动地形难度系数。小狗走得稳则动态升级地形复杂度（台阶、倾角、凸起障碍）。 | **0.9391** |
 
-#### 4.2.7 Perf 
-| 指标完整 Tag | 单位 | 计算管线开销解析 | 本次实验实测终值 |
+**4.2.7 Perf**
+
+| 指标 Tag | 单位 | 开销解析 | 实测终值 |
 | :--- | :---: | :--- | :---: |
 | `Perf/total_fps` | $\text{steps/s}$ | 全系统物理仿真、传感器渲染与 PPO 策略网络训练的每秒综合样本吞吐量。 | **27,215 steps/s** |
 | `Perf/collection time` | $\text{s}$ | 4096 个环境并行推进 24 步（单次采集 98,304 条时序转移）所耗费的时间。 | **3.439 s** |
 | `Perf/learning_time` | $\text{s}$ | GPU 执行 5 个 Epoch（20 个 Mini-batch）反向传播更新 Actor 与 Critic 的总耗时。 | **0.173 s** |
 
-#### 4.2.8 Policy 
-| 指标完整 Tag | 物理含义 | 机制解析与实机价值 | 本次实验实测终值 |
+**4.2.8 Policy**
+
+| 指标 Tag | 物理含义 | 实机价值 | 实测终值 |
 | :--- | :--- | :--- | :---: |
 | `Policy/mean_noise_std` | 动作对角高斯标准差向量的数学均值 $\frac{1}{12}\sum_{j=1}^{12} \sigma_j$。 | 策略动作探索方差。确保真实机器人在遭遇突发推搡时保持阻尼顺应性。 | **1.0528** |
 
@@ -359,7 +415,7 @@ $$
 
 传统监督学习或简单离散动作强化学习中，在面对高维连续动作机器人控制时“损失必须单调下降”、“熵必须最终衰减至 0”的直觉在这里完全不成立：
 
-#### 1.  `Loss/value_function`
+**1.  `Loss/value_function`**
 
 ![image-20261106164827491](image/image-20261106164827491.png)
 
@@ -374,7 +430,7 @@ $$
   * Critic 价值网络的预测能力不仅没有劣化，反而比初期精准了整整 20 倍。
 * **地形难度的自适应提升**：随着小狗越走越稳，`terrain_levels` 从平地解锁至 0.94+ 崎岖复杂地形。粗糙地面带来的随机打滑和微小碰撞，使物理环境本身的不可预测内在方差天然上升。
 
-#### 2.  `Loss/entropy` 
+**2.  `Loss/entropy`**
 
 ![image-20261106165313703](image/image-20261106165313703.png)
 
@@ -411,12 +467,15 @@ $$
 
 ---
 
-### 4.4  MPC 规划器
+### 4.4 MPC 规划器
 
 在 ReLIC 的后续自主全身操作扩展《Sumo》中，上层采用的是 **MPPI（Model Predictive Path Integral，基于采样的模型预测控制）**。其在预测时域步长 $T$ 内优化的目标函数是物理最优控制的**代价函数（Cost Function $J$）**：
 
 $$
-J(\mathbf{U}) = \sum_{t=0}^{T} \Big( w_{\text{goal}} J_{\text{goal}}(t) + w_{\text{coll}} J_{\text{coll}}(t) + w_{\text{smooth}} J_{\text{smooth}}(t) + w_{\text{posture}} J_{\text{posture}}(t) \Big)
+\begin{aligned}
+J(\mathbf{U}) = \sum_{t=0}^{T} \Big( & w_{\text{goal}} J_{\text{goal}}(t) + w_{\text{coll}} J_{\text{coll}}(t) \\
+& + w_{\text{smooth}} J_{\text{smooth}}(t) + w_{\text{posture}} J_{\text{posture}}(t) \Big)
+\end{aligned}
 $$
 
 各代价子项的严格物理定义如下：
@@ -470,7 +529,7 @@ $$
 
 在实际训练中，如果直接从零尝试学习“三足悬空踢球”或“单腿动态抗扰”，强化学习将面临巨大的探索空间稀疏奖励困境：
 
-| 训练阶段 | 核心任务定位 | 触地判死约束 | 核心奖励 |  |
+| 训练阶段 | 任务定位 | 触地重置约束 | 核心奖励 | 能力涌现 |
 | :---: | :--- | :--- | :--- | :--- |
 | **Phase 1** | **全肢体基础运动与平衡基石** | 严格约束：任何肢体（大腿、小腿上段、躯干）非预期触地即重置。 | 重点激励线速度与角速度跟踪（+7.0 / +3.5），施加严格动作突变率与能耗惩罚。 | 掌握稳健的四足全向平地与越野小跑，建立全身基本协调。 |
 | **Phase 2** | **操作肢体解绑与接触放宽** | 放宽接触限制：允许大腿（`.*uleg`）在交互中产生物理接触。 | 躯干高度跟踪惩罚提高至 -30.0，引入足端离地间隙。 | 允许单腿被抽调并抬起，策略在肢体受限工况下探索初步重心偏移。 |
@@ -517,14 +576,16 @@ ReLIC 成功打破了足式机器人领域长期固化的“上身专司操作�
 
 ### Appendix D Implementation Details of Reinforcement Learning
 
-#### 1. 网络架构与超参数
+**1. 网络架构与超参数**
+
 * **Policy & Value Network**：双层多层感知机（MLP），每层隐藏单元维度为 $[512, 256, 128]$，采用 ELU 激活函数。
 * **强化学习算法**：PPO（Proximal Policy Optimization），重要参数设置：
   * 折扣因子 $\gamma = 0.99$，GAE 参数 $\lambda = 0.95$；
   * PPO Clip 阈值 $\epsilon = 0.2$；学习率 $\eta = 3 \times 10^{-4}$ 并配以自适应退火；
   * 每次迭代收集步数：$24$ 步 $\times 4096$ 环境，Batch size 为 16384。
 
-#### 2. 四足与三足支撑奖励项权重细节
+**2. 四足与三足支撑奖励项权重细节**
+
 * **机身速度跟踪**：$r_{\text{lin\_vel}} = \exp(-\|\mathbf{v}_{xy} - \mathbf{v}_{xy}^{\text{cmd}}\|^2 / 0.25)$；
 * **躯干姿态稳定**：$r_{\text{ang\_vel}} = \exp(-\|\boldsymbol{\omega}_{xy}\|^2 / 0.25)$，惩罚机身摇摆；
 * **三足平衡支撑惩罚**：当某一腿 $m(\lambda)=1$ 悬空操作时，若地面检测到支撑腿数量 $<3$，施加强烈惩罚项 $r_{\text{fall\_penalty}} = -2.0$，强迫其余三腿牢固压地。

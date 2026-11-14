@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 165" width="1600" height="287" style="width:100%;height:auto;max-width:100%;display:block;" font-family="'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif">
+  <defs>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 z" fill="#495057"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 9 1 L 1 5 L 9 9 z" fill="#495057"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="920" height="165" rx="12" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+  <rect x="14" y="14" width="892" height="137" rx="12" fill="#f8f9fa" fill-opacity="0.75" stroke="#495057" stroke-width="1.6" stroke-dasharray="6,4"/>
+  <text x="30" y="40" font-size="14.5" font-weight="700" fill="#212529">离散断崖地形下自发涌现的步态转换序列 (§4)</text>
+  <rect x="30" y="52" width="240" height="80" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="2"/>
+  <text x="150.0" y="76.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">阶段 1 · 平地逼近阶段</text>
+  <text x="150.0" y="97.0" text-anchor="middle" font-size="13.5" fill="#2b3035">保持对角小跑步态 (Trot, Δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">ϕ</tspan> = π)</text>
+  <text x="150.0" y="118.0" text-anchor="middle" font-size="13.5" fill="#2b3035">对角双腿交替支撑，低能耗平稳推进</text>
+  <rect x="340" y="52" width="260" height="80" rx="10" fill="#ffe8cc" stroke="#d9480f" stroke-width="2"/>
+  <text x="470.0" y="76.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">阶段 2 · 断崖腾跃阶段 (14–20 cm)</text>
+  <text x="470.0" y="97.0" text-anchor="middle" font-size="13.5" fill="#2b3035">突变为四足同相弹跳 (Pronk, Δ<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">ϕ</tspan> = 0)</text>
+  <text x="470.0" y="118.0" text-anchor="middle" font-size="13.5" fill="#2b3035">四腿同步爆发蹬地，牺牲能耗换取存活性</text>
+  <rect x="670" y="52" width="220" height="80" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="780.0" y="76.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">阶段 3 · 平地复归阶段</text>
+  <text x="780.0" y="97.0" text-anchor="middle" font-size="13.5" fill="#2b3035">跨越末处间隙后自主复归 Trot</text>
+  <text x="780.0" y="118.0" text-anchor="middle" font-size="13.5" fill="#2b3035">恢复对角交替节律，稳定巡航</text>
+  <polyline points="270,92 340,92" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="276.0" y="67.0" width="58.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="305.0" y="82.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">逼近断崖</text>
+  <polyline points="600,92 670,92" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <rect x="606.0" y="67.0" width="58.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="635.0" y="82.0" text-anchor="middle" font-size="13" font-weight="600" fill="#495057">安全着陆</text>
+</svg>

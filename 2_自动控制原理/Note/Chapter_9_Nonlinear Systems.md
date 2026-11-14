@@ -1,3 +1,18 @@
+---
+title: "Chapter 9: Nonlinear Systems"
+type: course
+domain: 自动控制原理
+course: 自动控制原理
+aliases:
+  - "自控第9章：非线性系统"
+tags:
+  - course
+  - classical-control
+prerequisites:
+  - "[[李雅普诺夫稳定性与反馈控制]]"
+  - "[[混杂动力学与模态约束]]"
+---
+
 我们学习的所有工具——无论是叠加原理、传递函数 $G(s)$、框图闭环公式 $\frac{G}{1+GH}$，还是复平面极点分析——全部建立在一个严苛的前提之上：**假设被控系统是线性定常（LTI）系统**。然而，
 
 > ***“All systems are nonlinear, especially if large signals are considered.”***  
@@ -24,7 +39,7 @@ $$
 
 “用切线近似曲线”听起来很合理，但在数学上会不会因为忽略了高阶非线性项而导致严重误判？俄国数学家李雅普诺夫（A. M. Lyapunov）提出了著名的两大稳定性判别方法，彻底为线性控制理论吃下了定心丸：
 
-| 李雅普诺夫方法                              | 专业名称与分析视角                                           | 核心定理内容与物理意义                                       |
+| 李雅普诺夫方法 | 分析视角 | 核心定理 / 物理意义 |
 | :------------------------------------------ | :----------------------------------------------------------- | :----------------------------------------------------------- |
 | **第一方法**<br>*(间接法 / 局部线性化法)*   | **Lyapunov's First Method**<br>（通过局部线性近似模型判断原非线性系统在平衡点附近的稳定性） | **1. 局部稳定保真定理**：如果一个非线性系统在平衡点处的**线性化近似模型是严格稳定的**（即线性模型的所有极点全部严格位于左半平面 $\operatorname{Re}\{p_i\} < 0$），那么**原本真实的非线性系统，在该平衡点周围的一定邻域内也必然是稳定的！**<br>**2. 局部失稳判定定理**：如果线性化近似模型哪怕只有 $1$ 个极点落在右半平面（$\operatorname{Re}\{p_i\} > 0$），那么真实非线性系统在该平衡点附近也必然是不稳定的！ |
 | **第二方法**<br>*(直接法 / 广义能量耗散法)* | **Lyapunov's Second Method**<br>（直接利用能量标量函数判断非线性系统的大范围稳定性） | 线性近似无法告诉我们“稳定区域到底有多大”。第二方法寻找一个描述系统**内部存储总能量**的正标量函数 $V(\mathbf{x}) > 0$（称为**李雅普诺夫函数 Lyapunov Function**）。<br>**核心物理直觉**：如果随着系统运动，这个能量函数对时间的导数恒为负数（$\dot{V}(\mathbf{x}) < 0$，即系统能量一直在持续耗散、不断往外漏），那么无论系统非线性有多强，内部能量最终必将耗尽，系统状态必然会稳稳停在平衡点上！ |
@@ -50,15 +65,10 @@ $$
 y = f(x) \tag{9.2}
 $$
 
-```mermaid
-flowchart LR
-    A["1. 确定平衡工作点 (x_0, y_0)"] --> B["2. 定义偏离平衡点的微小增量 δx, δy"]
-    B --> C["3. 在 x_0 处做泰勒展开并略去高阶无穷小项"]
-    C --> D["4. 减去平衡点基准方程，得到纯增量线性模型 δy = K·δx"]
-```
+![非线性系统在平衡工作点附近的雅可比局部线性化四步流程](image/Ch9_linearization_steps.svg)
 
 * **第 1 步**：系统正常工作的基准点为 $(x_0, y_0)$，满足 $y_0 = f(x_0)$。
-* **第 2 步**：当系统在工作点附近发生微小波动时，我们将真实的绝对变量拆分为**“工作点常数 $+$ 微小偏离量”**：
+* **第 2 步**：当系统在工作点附近发生微小波动时，我们将真实的绝对变量拆分为 **“工作点常数 $+$ 微小偏离量”**：
 
 $$
 x = x_0 + \delta x, \quad y = y_0 + \delta y \tag{9.3}
@@ -67,7 +77,10 @@ $$
   **第 3 步（在工作点 $x_0$ 处做泰勒级数展开）**：
 将 $y = f(x_0 + \delta x)$ 在 $x_0$ 处展开为无穷幂级数：
 $$
-y_0 + \delta y = f(x_0) + \left.\frac{df}{dx}\right|_{x_0} \delta x + \frac{1}{2!}\left.\frac{d^2 f}{dx^2}\right|_{x_0} (\delta x)^2 + \frac{1}{3!}\left.\frac{d^3 f}{dx^3}\right|_{x_0} (\delta x)^3 + \cdots \tag{9.4}
+\begin{aligned}
+y_0 + \delta y = f(x_0) &+ \left.\frac{df}{dx}\right|_{x_0} \delta x + \frac{1}{2!}\left.\frac{d^2 f}{dx^2}\right|_{x_0} (\delta x)^2 \\
+&+ \frac{1}{3!}\left.\frac{d^3 f}{dx^3}\right|_{x_0} (\delta x)^3 + \cdots
+\end{aligned} \tag{9.4}
 $$
 
 * **第 4 步（小信号截断与平衡项相消）**：
@@ -126,9 +139,9 @@ $$
 
 ---
 
-# 单摆与倒立摆的局部线性化
+# 单摆 / 倒立摆局部线性化
 
-## 单摆与倒立摆的双平衡点线性化
+## 单摆 / 倒立摆双平衡点线性化
 
 设摆杆长度为 $\ell$，质量为 $m$，摆角为 $\theta$（规定自然竖直下垂时 $\theta = 0$，竖直倒立向上时 $\theta = \pi$），电机施加的归一化控制力矩为 $u = \frac{T_c}{m\ell^2}$，固有频率记为 $\omega_0 = \sqrt{\frac{g}{\ell}}$。其精确的非线性运动微分方程为：
 
@@ -155,7 +168,10 @@ $$
 根据公式 $(9.10)$，对式 $(9.13)$ 中的 $f_1, f_2$ 分别关于 $x_1, x_2$ 和 $u$ 求偏导数（注意 $\frac{\partial (\sin x_1)}{\partial x_1} = \cos x_1$）：
 
 $$
-\mathbf{A} = \begin{bmatrix} \dfrac{\partial f_1}{\partial x_1} & \dfrac{\partial f_1}{\partial x_2} \\[1em] \dfrac{\partial f_2}{\partial x_1} & \dfrac{\partial f_2}{\partial x_2} \end{bmatrix}_{\theta_0, u_0} = \begin{bmatrix} 0 & 1 \\ -\omega_0^2 \cos\theta_0 & 0 \end{bmatrix}, \quad \mathbf{B} = \begin{bmatrix} \dfrac{\partial f_1}{\partial u} \\[1em] \dfrac{\partial f_2}{\partial u} \end{bmatrix}_{\theta_0, u_0} = \begin{bmatrix} 0 \\ 1 \end{bmatrix} \tag{9.15}
+\begin{aligned}
+\mathbf{A} &= \begin{bmatrix} \dfrac{\partial f_1}{\partial x_1} & \dfrac{\partial f_1}{\partial x_2} \\[1em] \dfrac{\partial f_2}{\partial x_1} & \dfrac{\partial f_2}{\partial x_2} \end{bmatrix}_{\theta_0, u_0} = \begin{bmatrix} 0 & 1 \\ -\omega_0^2 \cos\theta_0 & 0 \end{bmatrix} \\
+\mathbf{B} &= \begin{bmatrix} \dfrac{\partial f_1}{\partial u} \\[1em] \dfrac{\partial f_2}{\partial u} \end{bmatrix}_{\theta_0, u_0} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}
+\end{aligned} \tag{9.15}
 $$
 我们将 $\theta_0 = 0$ 和 $\theta_0 = \pi$ 分别代入式 $(9.15)$，看看发生了什么惊人的变化：
 

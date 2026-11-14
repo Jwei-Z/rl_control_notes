@@ -1,8 +1,20 @@
+---
+title: "ReLIC (CoRL 2025) 仿真环境复现指南"
+type: setup
+domain: 仿真与环境配置
+aliases:
+  - "ReLIC环境配置"
+  - "ReLIC Setup"
+tags:
+  - setup
+  - simulation
+---
+
 # ReLIC (CoRL 2025) 环境配置
 
 > **核心组件**：Ubuntu 22.04 LTS + Python 3.11 + PyTorch 2.7 (CUDA 12.8) + NVIDIA Isaac Sim 5.1 + Isaac Lab v2.3.x + RSL-RL 3.0.1 + ReLIC (CoRL 2025) 
 > **硬件配置验证**：双卡 NVIDIA GeForce RTX 3090 (24GB × 2)
-> **前置依赖**：本教程**继承自同目录下的** [[IsaacLab_Setup_Guide.md](file:///E:/Desktop/Documents/BIT/5_GoResearch/Nvidia-Sim/IsaacLab_Setup_Guide.md)] 与 [[Common Environment.md](file:///E:/Desktop/Documents/BIT/5_GoResearch/Nvidia-Sim/Common%20Environment.md)]。ReLIC 运行于 `IsaacLab_Setup_Guide.md` 所构建的 `isaaclab2` (Python 3.11) 虚拟环境内，复用其全部底座依赖，无需重建基础仿真器。
+> **前置依赖**：本教程**继承自同目录下的** [[IsaacLab_Setup_Guide]] 与 [[Common Environment]]。ReLIC 运行于 `IsaacLab_Setup_Guide.md` 所构建的 `isaaclab2` (Python 3.11) 虚拟环境内，复用其全部底座依赖，无需重建基础仿真器。
 
 ---
 
@@ -10,26 +22,7 @@
 
 **ReLIC (Reinforcement Learning for Interlimb Coordination)** 发表并收录于 CoRL 2025，是波士顿动力人工智能研究院 (Boston Dynamics AI Institute, BD-AI) 提出的具身移动操作控制架构：
 
-```mermaid
-flowchart TD
-    subgraph OfflineRL["离线强化学习层: ReLIC (基于 Isaac Lab)"]
-        Phase1["Phase 1: 3-legged 动态步态与基础平衡"]
-        Phase2["Phase 2 ~ Phase 4: 腿臂协同操作 (Interlimb Coordination)"]
-        Export["策略模型导出: .pt -> ONNX 格式 (约 800 KB)"]
-        Phase1 --> Phase2 --> Export
-    end
-    
-    subgraph OnlineMPC["在线实时规划层: SUMO (基于 MuJoCo C++)"]
-        CEM["采样优化器 (CEM Planner)"]
-        MuJoCo["MuJoCo 高频刚体与接触动力学"]
-        Weights["加载 ReLIC 预训练 ONNX 权重"]
-        
-        CEM --> MuJoCo
-        Weights --> MuJoCo
-    end
-    
-    Export -.->|"零训练直接复用"| Weights
-```
+![ReLIC / SUMO 双层复用架构](image/Relic_pipeline.svg)
 
 1. **灵活多肢体协同 (Flexible Interlimb Coordination)**：让四足机器人能够使用 **3 条腿稳定奔跑运动，同时将第 4 条腿与前置机械臂自由组合为复合操作器官**。
 2. **多阶段课程学习 (Curriculum Learning)**：
@@ -39,9 +32,9 @@ flowchart TD
 
 ---
 
-## 二、 继承关系与环境就绪检查
+## 二、 环境继承 / 就绪检查
 
-本项目**深度依赖**同目录下的 [[IsaacLab_Setup_Guide.md](file:///E:/Desktop/Documents/BIT/5_GoResearch/Nvidia-Sim/IsaacLab_Setup_Guide.md)]。在进行 ReLIC 部署前，请先核验基础环境：
+本项目**深度依赖**同目录下的 [[IsaacLab_Setup_Guide]]。在进行 ReLIC 部署前，请先核验基础环境：
 
 ```bash
 # 激活 Isaac Lab 虚拟环境
@@ -54,7 +47,7 @@ python -c "import isaaclab; print('Isaac Lab Core Version:', isaaclab.__version_
 
 ---
 
-## 三、 源码部署与 ReLIC 扩展安装
+## 三、 源码部署 / ReLIC 扩展安装
 
 ### 1. 官方源码目录结构
 克隆官方开源仓库：
@@ -102,7 +95,7 @@ pip list | grep relic
 
 ---
 
-## 四、任务环境与训练
+## 四、 任务环境 / 训练
 
 ### 1. ReLIC 注册的 Gym 任务列表
 ReLIC 在 Isaac Lab 任务注册表中预设了 4 个渐进式训练阶段与 1 个回放评估任务：
@@ -143,7 +136,6 @@ python scripts/rsl_rl/train.py \
     --checkpoint <model_checkpoint.pt>
 ```
 
-> [!TIP]
 > **预训练权重**：源码仓库已在 `source/relic/relic/assets/spot/pretrained/` 目录下打包提供了完整收敛的权重文件：
 >
 > * `policy.pt`（PyTorch 权重，约 849 KB）
@@ -152,7 +144,7 @@ python scripts/rsl_rl/train.py \
 
 ---
 
-## 五、 策略回放与渲染评估
+## 五、 策略回放 / 渲染评估
 
 运行评估脚本 `scripts/rsl_rl/play.py` 进行可视化回放：
 

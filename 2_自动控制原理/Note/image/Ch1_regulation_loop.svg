@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 195" width="1600" height="355" style="width:100%;height:auto;max-width:100%;display:block;" font-family="'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif">
+  <defs>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 z" fill="#495057"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 9 1 L 1 5 L 9 9 z" fill="#495057"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="195" rx="12" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+  <rect x="20" y="58" width="165" height="50" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="2"/>
+  <text x="102.5" y="88.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">恒定设定值 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">r</tspan> ≡ const</text>
+  <circle cx="235" cy="83" r="20" fill="#fff3bf" stroke="#e67700" stroke-width="2"/>
+  <text x="235" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#1e1e1e">±</text>
+  <rect x="300" y="58" width="135" height="50" rx="10" fill="#fff3bf" stroke="#e67700" stroke-width="2"/>
+  <text x="367.5" y="88.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">镇定调节控制器</text>
+  <rect x="470" y="58" width="110" height="50" rx="10" fill="#ffe8cc" stroke="#d9480f" stroke-width="2"/>
+  <text x="525.0" y="88.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">执行机构</text>
+  <rect x="615" y="58" width="120" height="50" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="675.0" y="88.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">被控对象</text>
+  <rect x="765" y="58" width="95" height="50" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
+  <text x="812.5" y="88.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">稳态 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">y</tspan> ≈ <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">r</tspan></text>
+  <rect x="420" y="134" width="160" height="42" rx="10" fill="#f3f0ff" stroke="#5f3dc4" stroke-width="2"/>
+  <text x="500.0" y="160.0" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e1e1e">测量传感器</text>
+  <polyline points="185,83 215,83" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="255,83 300,83" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="435,83 470,83" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="580,83 615,83" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="735,83 765,83" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="675,16 675,58" fill="none" stroke="#c92a2a" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-end)"/>
+  <rect x="615.0" y="9.0" width="120.0" height="21" rx="4" fill="#ffffff" fill-opacity="0.94"/>
+  <text x="675.0" y="24.0" text-anchor="middle" font-size="13" font-weight="600" fill="#c92a2a">突发环境扰动 <tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">w</tspan>(<tspan font-family="'Cambria Math', 'Times New Roman', serif" font-style="italic">t</tspan>)</text>
+  <polyline points="750,83 750,155 580,155" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+  <polyline points="420,155 235,155 235,103" fill="none" stroke="#495057" stroke-width="2" marker-end="url(#arrow-end)"/>
+</svg>

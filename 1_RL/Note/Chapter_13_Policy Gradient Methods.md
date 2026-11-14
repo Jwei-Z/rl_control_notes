@@ -1,3 +1,20 @@
+---
+title: "Chapter 13: Policy Gradient Methods"
+type: course
+domain: 强化学习理论
+course: Sutton & Barto RL
+aliases:
+  - "RL第13章：策略梯度方法"
+tags:
+  - course
+  - rl
+  - sutton-barto
+prerequisites:
+  - "[[策略梯度定理与Actor-Critic]]"
+  - "[[广义优势估计GAE]]"
+  - "[[重要性采样与TRPO信任域]]"
+---
+
 回顾全书前 12 章的内容，几乎所有算法（动态规划、蒙特卡洛、时序差分、Sarsa、Q-learning、DQN 等）在本质上都属于**动作价值方法**：
 * 它们的运行逻辑高度依赖价值函数：先学习动作价值 $q(s, a)$，再基于估计出的动作价值通过 $\epsilon$-贪心或贪心机制选取动作；
 * **没有动作价值估计，策略甚至无法单独存在**。
@@ -53,7 +70,7 @@ $$
 
 ---
 
-## 策略参数化与 Softmax 
+## 策略参数化 / Softmax 
 
 在策略梯度方法中，对策略的参数化形式并没有严苛的结构限制，但必须满足两个基本前提：
 1. **数学可微性**：策略 $\pi(a \mid s, \theta)$ 关于参数向量 $\theta$ 处处可微，即偏导数梯度向量 $\nabla_\theta \pi(a \mid s, \theta)$ 存在且有限；
@@ -84,7 +101,7 @@ $$
 
 这是基于策略的方法在收敛特性上超越传统动作价值方法的重要特质。
 
-* **$\epsilon$-贪心动作价值方法的死穴**： 在基于 $Q(s, a)$ 的 $\epsilon$-贪心方法中，智能体为了维持探索，在任何时刻都必须保留 $\epsilon$ 的概率随机乱选动作。这意味着策略**永远无法蜕变为完全确定性的最优策略**，始终存在由于非理性探索带来的次优抖动；
+* **$\epsilon$-贪心动作价值方法的固有局限**： 在基于 $Q(s, a)$ 的 $\epsilon$-贪心方法中，智能体为了维持探索，在任何时刻都必须保留 $\epsilon$ 的概率随机乱选动作。这意味着策略**永远无法蜕变为完全确定性的最优策略**，始终存在由于非理性探索带来的次优抖动；
 * **基于 $Q$ 值的 Softmax 分布为何依然失效？** 
   若考虑用动作价值构建 Softmax 分布 $\pi(a|s) \propto e^{Q(s, a) / \tau}$：
   * 当动作价值估计收敛至其真实值时，$Q(s, a_1)$ 与 $Q(s, a_2)$ 之间的差值是一个**固定的有限常数**；
@@ -104,7 +121,7 @@ $$
 
 ---
 
-#### 经典算例：短走廊反转动作问题
+**经典算例：短走廊反转动作问题**
 
 ![image-20261008200729564](image/image-20261008200729564.png)
 
@@ -214,13 +231,16 @@ $$
   
 * **最优状态价值**： 将 $p^* = 2 - \sqrt{2}$ 代入 $v_1(p)$，其精确最大价值为：
   $$
-  v_1(p^*) = \frac{2(2 - \sqrt{2}) - 4}{(2 - \sqrt{2})(1 - (2 - \sqrt{2}))} = \frac{-2\sqrt{2}}{(2 - \sqrt{2})(\sqrt{2} - 1)} = -(4 + 4\sqrt{2}) \approx \mathbf{-11.65685} \approx \mathbf{-11.6}
+  \begin{aligned}
+  v_1(p^*) &= \frac{2(2 - \sqrt{2}) - 4}{(2 - \sqrt{2})(1 - (2 - \sqrt{2}))} \\
+  &= \frac{-2\sqrt{2}}{(2 - \sqrt{2})(\sqrt{2} - 1)} = -(4 + 4\sqrt{2}) \approx \mathbf{-11.66}
+  \end{aligned}
   $$
   
 
 # The Policy Gradient Theorem
 
-## 平滑性与强收敛保证
+## 平滑性 / 强收敛保证
 
 * **动作价值方法（$\epsilon$-greedy）的非连续突变性**： 在基于动作价值的方法中，动作的选择依赖于对 Q 值取 $\arg\max$。即使动作价值估计仅发生任意微小的扰动，一旦导致两个动作的大小次序发生颠倒，$\epsilon$-贪心策略所输出的动作概率分布就会发生**剧烈跳变**；
 * **参数化策略的平滑连续性**：在参数化策略（如 Softmax 偏好模型）中，动作概率 $\pi(a \mid s, \theta)$ 是参数矢量 $\theta$ 的**连续光滑函数**。参数 $\theta$ 的微小变动只会导致动作概率发生平滑渐变；
@@ -239,12 +259,12 @@ $$
 
 1. **双重影响机制**：系统的性能指标不仅取决于在每个状态下做出的**动作选择**，还取决智能体访问各个状态的**状态分布概率**。而**这两者同时受到策略参数 $\theta$ 影响**：
    $$
-   \theta \text{ 发生改变} \implies \begin{cases}
-   \text{影响 1：直接改变当前状态下的动作概率 } \pi(a \mid s, \theta) \\[4pt]
-   \text{影响 2：连锁改变未来轨迹走向，进而改变状态访问分布 } \mu(s)
+   \theta \text{ 改变} \implies \begin{cases}
+   \text{影响 1：直接改变动作概率 } \pi(a \mid s, \theta) \\[4pt]
+   \text{影响 2：连带改变状态分布 } \mu(s)
    \end{cases}
    $$
-2. **环境模型未知的死穴**：  在给定某个状态时，参数 $\theta$ 对动作选择（以及即时奖励）的影响，可以直接通过已知的策略函数求导 $\nabla_\theta \pi(a \mid s, \theta)$ 计算出来；**但是，策略参数 $\theta$ 对状态分布的影响，深度依赖于环境底层的多步状态转移概率矩阵 $P(s' \mid s, a)$**，而Model-free强化学习中，环境动态转移概率是未知的。
+2. **环境模型未知的理论困难**：  在给定某个状态时，参数 $\theta$ 对动作选择（以及即时奖励）的影响，可以直接通过已知的策略函数求导 $\nabla_\theta \pi(a \mid s, \theta)$ 计算出来；**但是，策略参数 $\theta$ 对状态分布的影响，深度依赖于环境底层的多步状态转移概率矩阵 $P(s' \mid s, a)$**，而Model-free强化学习中，环境动态转移概率是未知的。
 
 > 当性能梯度显式依赖于“策略改变对未知状态分布的影响”时，我们如何在完全不依赖环境转移模型的前提下计算出性能梯度？
 
@@ -272,7 +292,7 @@ $$
 
 ## 第一性原理严格数学证明
 
-**对单状态价值关于参数求导：**由状态价值与动作价值的定义式 $v_\pi(s) = \sum_a \pi(a \mid s) q_\pi(s, a)$，应用微积分乘积法则展开：
+**对单状态价值关于参数求导：** 由状态价值与动作价值的定义式 $v_\pi(s) = \sum_a \pi(a \mid s) q_\pi(s, a)$，应用微积分乘积法则展开：
 $$
 \begin{aligned}
 \nabla_\theta v_\pi(s) &= \nabla_\theta \left[ \sum_{a \in \mathcal{A}} \pi(a \mid s) q_\pi(s, a) \right] \\
@@ -280,7 +300,7 @@ $$
 \end{aligned}
 $$
 
-**展开动作价值的梯度 $\nabla_\theta q_\pi(s, a)$：**利用贝尔曼单步转移方程展开 $q_\pi(s, a) = \sum_{s', r} p(s', r \mid s, a) [r + v_\pi(s')]$：，即时转移概率 $p(s', r \mid s, a)$ 与奖励 $r$ 属于客观物理环境，**与策略参数 $\theta$ 无关**（即 $\nabla_\theta p = 0, \nabla_\theta r = 0$）。因此求导穿透到内部的未来状态价值项：
+**展开动作价值的梯度 $\nabla_\theta q_\pi(s, a)$：** 利用贝尔曼单步转移方程展开 $q_\pi(s, a) = \sum_{s', r} p(s', r \mid s, a) [r + v_\pi(s')]$：，即时转移概率 $p(s', r \mid s, a)$ 与奖励 $r$ 属于客观物理环境，**与策略参数 $\theta$ 无关**（即 $\nabla_\theta p = 0, \nabla_\theta r = 0$）。因此求导穿透到内部的未来状态价值项：
 $$
 \nabla_\theta q_\pi(s, a) = \nabla_\theta \left[ \sum_{s', r} p(s', r \mid s, a)(r + v_\pi(s')) \right] = \sum_{s'} p(s' \mid s, a) \nabla_\theta v_\pi(s') \tag{2}
 $$
@@ -290,7 +310,7 @@ $$
 \nabla_\theta v_\pi(s) = \sum_{a \in \mathcal{A}} \nabla_\theta \pi(a \mid s) q_\pi(s, a) + \sum_{a \in \mathcal{A}} \pi(a \mid s) \sum_{s'} p(s' \mid s, a) \nabla_\theta v_\pi(s') \tag{3}
 $$
 
-**前向递归展开：**式 (3) 展现了一个优雅的自相似结构：当前的导数 $\nabla v_\pi(s)$ 依赖于后续所有可能到达的状态的导数 $\nabla v_\pi(s')$。 持续将 $\nabla v_\pi(s')$ 递归展开：
+**前向递归展开：** 式 (3) 展现了一个优雅的自相似结构：当前的导数 $\nabla v_\pi(s)$ 依赖于后续所有可能到达的状态的导数 $\nabla v_\pi(s')$。 持续将 $\nabla v_\pi(s')$ 递归展开：
 $$
 \begin{aligned}
 \nabla_\theta v_\pi(s) &= \sum_a \nabla \pi(a \mid s) q_\pi(s, a) + \sum_a \pi(a \mid s) \sum_{s'} p(s' \mid s, a) \left[ \sum_{a'} \nabla \pi(a' \mid s') q_\pi(s', a') + \dots \right] \\
@@ -306,8 +326,7 @@ $$
 &= \sum_{s \in \mathcal{S}} \eta(s) \sum_{a \in \mathcal{A}} \nabla \pi(a \mid s) q_\pi(s, a)
 \end{aligned}
 $$
-> [!IMPORTANT]
->
+> 
 > * 定义状态 $s$ 处的**瞬时策略导数项**：
 >   $$
 >   \phi(s) \doteq \sum_{a \in \mathcal{A}} \nabla_\theta \pi(a \mid s) q_\pi(s, a)
@@ -368,7 +387,7 @@ $$
 $$
 ---
 
-## 策略梯度定理的期望形式与对数
+## 策略梯度定理：期望形式 / 对数导数
 
 为了利用实际采样数据实现免模型更新，策略梯度定理通常转换为更利于蒙特卡洛采样的**数学期望形式**。利用恒等式 $\nabla \ln x = \frac{\nabla x}{x} \implies \nabla x = x \nabla \ln x$：
 
@@ -427,7 +446,7 @@ $$
 \end{aligned}
 $$
 
-**蒙特卡洛无偏回报替代：**式中的真实动作价值 $q_\pi(S_t, A_t)$ 依然未知。根据动作价值定义，从该时刻起直到整幕结束的实际累积折扣回报 $G_t \doteq \sum_{k=t+1}^T \gamma^{k-t-1} R_k$ 是动作价值的严格无偏估计：
+**蒙特卡洛无偏回报替代：** 式中的真实动作价值 $q_\pi(S_t, A_t)$ 依然未知。根据动作价值定义，从该时刻起直到整幕结束的实际累积折扣回报 $G_t \doteq \sum_{k=t+1}^T \gamma^{k-t-1} R_k$ 是动作价值的严格无偏估计：
 $$
 \mathbb{E}_\pi [G_t \mid S_t, A_t] = q_\pi(S_t, A_t)
 $$
@@ -445,7 +464,7 @@ $$
 
 ---
 
-## 一阶微分与探索平衡机制
+## 一阶微分 / 探索平衡机制
 
 为了更透彻地理解式 (13.8) 究竟在参数空间做了什么：
 
@@ -473,8 +492,8 @@ $$
 
 $$
 \begin{aligned}
-\beta_t > 0 \implies \pi(A_t \mid S_t, \theta_{t+1}) > \pi(A_t \mid S_t, \theta_t) \quad &(\text{该动作在新策略下的概率严格单调上升}) \\
-\beta_t < 0 \implies \pi(A_t \mid S_t, \theta_{t+1}) < \pi(A_t \mid S_t, \theta_t) \quad &(\text{该动作在新策略下的概率严格单调下降})
+\beta_t > 0 &\implies \pi(A_t \mid S_t, \theta_{t+1}) > \pi(A_t \mid S_t, \theta_t) \quad (\text{概率严格上升}) \\
+\beta_t < 0 &\implies \pi(A_t \mid S_t, \theta_{t+1}) < \pi(A_t \mid S_t, \theta_t) \quad (\text{概率严格下降})
 \end{aligned}
 $$
 
@@ -489,18 +508,15 @@ $$
 $$
 \begin{array}{l}
 \hline
-\textbf{Algorithm: } \text{REINFORCE: Monte-Carlo Policy-Gradient Control (Episodic) for } \pi_* \\
+\textbf{Algorithm: }\text{REINFORCE: MC Policy-Gradient (Episodic)} \\
 \hline
-\textbf{Input: } \text{A differentiable policy parameterization } \pi(a \mid s, \theta) \\
-\textbf{Algorithm Parameters: } \text{Step size } \alpha > 0, \text{ discount factor } \gamma \in (0, 1] \\
-\textbf{Initialize: } \text{Policy parameter vector } \theta \in \mathbb{R}^{d'} \text{ (e.g., to } \mathbf{0}\text{)} \\
+\textbf{Input: }\text{Differentiable policy }\pi(a \mid s, \theta) \\
+\textbf{Params: }\alpha > 0, \; \gamma \in (0, 1]; \quad \textbf{Init: }\theta \in \mathbb{R}^{d'} \text{ (e.g., }\mathbf{0}\text{)} \\
 \hline
-\textbf{Loop forever } \text{(for each episode):} \\
-\quad \text{Generate an episode } S_0, A_0, R_1, S_1, A_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ following } \pi(\cdot \mid \cdot, \theta) \\
-\quad \textbf{Loop for } \text{each step of the episode } t = 0, 1, \dots, T - 1\textbf{:} \\
-\quad\quad \text{// Step 1: Compute empirical discounted return from step } t\text{:} \\
-\quad\quad G \leftarrow \sum_{k=t+1}^T \gamma^{k-t-1} R_k \\
-\quad\quad \text{// Step 2: Policy parameter update via stochastic gradient ascent:} \\
+\textbf{Loop forever }\text{(for each episode):} \\
+\quad \text{Sample } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \sim \pi(\cdot \mid \cdot, \theta) \\
+\quad \textbf{For }\text{step } t = 0, 1, \dots, T - 1\textbf{:} \\
+\quad\quad G \leftarrow \sum_{k=t+1}^T \gamma^{k-t-1} R_k \quad \text{// empirical return} \\
 \quad\quad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_\theta \ln \pi(A_t \mid S_t, \theta) \\
 \hline
 \end{array}
@@ -510,7 +526,7 @@ $$
 
 ---
 
-## 算例验证与蒙特卡洛高方差缺陷
+## 算例验证 / 蒙特卡洛高方差缺陷
 
 ![image-20261008221556542](image/image-20261008221556542.png)
 
@@ -578,7 +594,10 @@ $$
   $$
   将上述结果带回分式中：
   $$
-  \nabla_\theta \ln \left( \sum_{b \in \mathcal{A}(s)} e^{h(s, b, \theta)} \right) = \frac{\sum_{b \in \mathcal{A}(s)} e^{h(s, b, \theta)} \mathbf{x}(s, b)}{\sum_{b' \in \mathcal{A}(s)} e^{h(s, b', \theta)}} = \sum_{b \in \mathcal{A}(s)} \underbrace{\left( \frac{e^{h(s, b, \theta)}}{\sum_{b' \in \mathcal{A}(s)} e^{h(s, b', \theta)}} \right)}_{\text{恰好为策略定义 } \pi(b \mid s, \theta)} \mathbf{x}(s, b)
+  \begin{aligned}
+  \nabla_\theta \ln \left( \sum_{b \in \mathcal{A}(s)} e^{h(s, b, \theta)} \right) &= \frac{\sum_{b \in \mathcal{A}(s)} e^{h(s, b, \theta)} \mathbf{x}(s, b)}{\sum_{b' \in \mathcal{A}(s)} e^{h(s, b', \theta)}} \\
+  &= \sum_{b \in \mathcal{A}(s)} \underbrace{\left( \frac{e^{h(s, b, \theta)}}{\sum_{b' \in \mathcal{A}(s)} e^{h(s, b', \theta)}} \right)}_{\pi(b \mid s, \theta)} \mathbf{x}(s, b)
+  \end{aligned}
   $$
   根据式 Softmax 概率定义，括号内的分式正是动作 $b$ 的概率 $\pi(b \mid s, \theta)$，故第二项严格等于：
   $$
@@ -605,13 +624,17 @@ $$
 
 2. **零均值守恒特性**： 对式 (13.9) 在整个动作分布上求期望，结果恒等于 0：
    $$
-   \mathbb{E}_{a \sim \pi} \big[ \nabla_\theta \ln \pi(a \mid s, \theta) \big] = \sum_a \pi(a \mid s, \theta) \left( \mathbf{x}(s, a) - \sum_b \pi(b \mid s, \theta) \mathbf{x}(s, b) \right) = \sum_a \pi(a \mid s) \mathbf{x}(s, a) - \sum_b \pi(b \mid s) \mathbf{x}(s, b) = \mathbf{0}
+   \begin{aligned}
+   \mathbb{E}_{a \sim \pi} \big[ \nabla_\theta \ln \pi(a \mid s, \theta) \big]
+   &= \sum_a \pi(a \mid s, \theta) \left( \mathbf{x}(s, a) - \sum_b \pi(b \mid s, \theta) \mathbf{x}(s, b) \right) \\
+   &= \sum_a \pi(a \mid s) \mathbf{x}(s, a) - \sum_b \pi(b \mid s) \mathbf{x}(s, b) = \mathbf{0}
+   \end{aligned}
    $$
-   是后续第 13.4 节证明**“引入与动作无关的状态基线（Baseline）不会对策略梯度的无偏性产生任何破坏”**的底层数学根源。
+   是后续第 13.4 节证明 **“引入与动作无关的状态基线（Baseline）不会对策略梯度的无偏性产生任何破坏”** 的底层数学根源。
 
 # REINFORCE with Baseline
 
-## 消除高方差与引入基线机制
+## 消除高方差：引入基线机制
 
 原始 REINFORCE 算法中，参数更新直接由实际采样的全轨迹累积回报 $G_t$ 驱动：
 $$
@@ -643,7 +666,7 @@ $$
 $$
 ---
 
-## 基线REINFORCE 更新律与优势函数
+## 基线 REINFORCE 更新律 / 优势函数
 
 应用与 13.3 节完全相同的单样本动作采样与似然比对数技巧，导出**带基线的 REINFORCE 参数更新方程**：
 $$
@@ -662,7 +685,7 @@ $$
   $$
   \delta_t \doteq G_t - \hat{v}(S_t, \mathbf{w})
   $$
-  这在概念上严格对应于**优势函数**的蒙特卡洛样本实现：$\delta_t$ 衡量的是**“当前采样的动作 $A_t$ 所获得的实际回报，相比于该状态下所有动作的平均预期收益 $\hat{v}(S_t)$，到底高出还是低出了多少”**。
+  这在概念上严格对应于**优势函数**的蒙特卡洛样本实现：$\delta_t$ 衡量的是 **“当前采样的动作 $A_t$ 所获得的实际回报，相比于该状态下所有动作的平均预期收益 $\hat{v}(S_t)$，到底高出还是低出了多少”**。
 
 在带基线的 REINFORCE 中，系统需要**联合学习两套模型参数**：
 1. **策略网络**：参数为 $\theta \in \mathbb{R}^{d'}$，学习率为 $\alpha^\theta > 0$；
@@ -673,23 +696,18 @@ $$
 $$
 \begin{array}{l}
 \hline
-\textbf{Algorithm: } \text{REINFORCE with Baseline (Episodic) for Estimating } \pi_\theta \approx \pi_* \\
+\textbf{Algorithm: }\text{REINFORCE with Baseline (Episodic)} \\
 \hline
-\textbf{Input: } \text{A differentiable policy parameterization } \pi(a \mid s, \theta) \\
-\textbf{Input: } \text{A differentiable state-value parameterization } \hat{v}(s, \mathbf{w}) \\
-\textbf{Algorithm Parameters: } \text{Step sizes } \alpha^\theta > 0, \; \alpha^\mathbf{w} > 0, \text{ discount factor } \gamma \in (0, 1] \\
-\textbf{Initialize: } \text{Policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \text{ (e.g., to } \mathbf{0}\text{)} \\
+\textbf{Input: }\text{Policy }\pi(a \mid s, \theta), \; \text{baseline }\hat{v}(s, \mathbf{w}) \\
+\textbf{Params: }\alpha^\theta > 0, \; \alpha^\mathbf{w} > 0, \; \gamma \in (0, 1] \\
+\textbf{Init: }\theta \in \mathbb{R}^{d'}, \; \mathbf{w} \in \mathbb{R}^d \text{ (e.g., to }\mathbf{0}\text{)} \\
 \hline
-\textbf{Loop forever } \text{(for each episode):} \\
-\quad \text{Generate an episode } S_0, A_0, R_1, S_1, A_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ following } \pi(\cdot \mid \cdot, \theta) \\
-\quad \textbf{Loop for } \text{each step of the episode } t = 0, 1, \dots, T - 1\textbf{:} \\
-\quad\quad \text{// Step 1: Compute cumulative discounted return from step } t\text{:} \\
-\quad\quad G \leftarrow \sum_{k=t+1}^T \gamma^{k-t-1} R_k \\
-\quad\quad \text{// Step 2: Compute advantage error (baseline subtraction):} \\
-\quad\quad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
-\quad\quad \text{// Step 3: Update state-value baseline weights (via semi-gradient MSE):} \\
+\textbf{Loop forever }\text{(for each episode):} \\
+\quad \text{Sample } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \sim \pi(\cdot \mid \cdot, \theta) \\
+\quad \textbf{For }\text{step } t = 0, 1, \dots, T - 1\textbf{:} \\
+\quad\quad G \leftarrow \sum_{k=t+1}^T \gamma^{k-t-1} R_k \quad \text{// return from } t \\
+\quad\quad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \quad \text{// MC advantage} \\
 \quad\quad \mathbf{w} \leftarrow \mathbf{w} + \alpha^\mathbf{w} \delta \nabla_\mathbf{w} \hat{v}(S_t, \mathbf{w}) \\
-\quad\quad \text{// Step 4: Update policy parameters (via baseline-subtracted policy gradient):} \\
 \quad\quad \theta \leftarrow \theta + \alpha^\theta \gamma^t \delta \nabla_\theta \ln \pi(A_t \mid S_t, \theta) \\
 \hline
 \end{array}
@@ -710,33 +728,11 @@ REINFORCE with Baseline 标志着算法架构设计上的一个重要转折点�
 
 # Actor–Critic Methods
 
-## 带基线的 REINFORCE”到“Actor-Critic”的本质
+## 从带基线 REINFORCE 到 Actor-Critic
 
 在 13.4 节中，我们已经见到了同时维护策略网络 $\pi(a|s, \theta)$ 与价值网络 $\hat{v}(s, \mathbf{w})$ 的算法。其关键在于价值网络如何介入四元状态转移组 $(S_t, A_t, R_{t+1}, S_{t+1})$。
 
-```mermaid
-flowchart TD
-    subgraph REINFORCE["【带基线的 REINFORCE】（纯蒙特卡洛：漫长等待整幕结束）"]
-        direction TB
-        R_S["当前状态 S_t"] --> R_B["基线网络：仅在动作发生前<br>被动生成参考标杆 v̂(S_t)"]
-        R_S --> R_A["执行动作 A_t"]
-        R_A --> R_WAIT["等待整幕结束（离线收集）<br>累加所有后续收益：<br>G_t = R_{t+1} + γ R_{t+2} + ... + γ^{T-t-1} R_T"]
-        R_WAIT --> R_EVAL["评估动作优势：<br>G_t - v̂(S_t)"]
-        R_B --> R_EVAL
-        R_EVAL --> R_UPDATE["回合结束才能更新策略 θ<br>【致命痛点：高方差、无法在线学习】"]
-    end
-
-    subgraph AC["【单步 Actor-Critic】（单步时序差分：裁判实时打分）"]
-        direction TB
-        AC_S["当前状态 S_t"] --> AC_B["被减基准：v̂(S_t)"]
-        AC_S --> AC_A["执行动作 A_t"]
-        AC_A --> AC_STEP["单步环境即时反馈：<br>获得 R_{t+1}，转移至新状态 S_{t+1}"]
-        AC_STEP --> AC_CRITIC["Critic 评论家登场：<br>直接预测新状态未来潜力 v̂(S_{t+1})"]
-        AC_CRITIC --> AC_TD["构造单步自举优势 (TD 误差)：<br>δ_t = R_{t+1} + γ v̂(S_{t+1}) - v̂(S_t)"]
-        AC_B --> AC_TD
-        AC_TD --> AC_UPDATE["当前时间步立刻更新参数！<br>• Actor 策略参数：θ ← θ + α^θ I δ_t ∇ ln π<br>• Critic 价值参数：w ← w + α^w δ_t ∇ v̂<br>【核心优势：方差极小、完全在线实时】"]
-    end
-```
+![带基线 REINFORCE vs. 单步 Actor-Critic 架构图](image/Ch13_actor_critic.svg)
 
 1. **带基线的 REINFORCE 中，$\hat{v}$ 仅仅评价前序状态**： $\hat{v}(S_t, \mathbf{w})$ 的估计在动作 $A_t$ **发生之前**就做出的，不知道智能体接下来会选什么动作，**无法直接评价动作 $A_t$ 本身是好是坏**；仅仅是一个被动的基准刻度。评估动作到底有多好，算法依然只能等整个 Episode 结束，去收集后面的全部奖励算出 $G_t$。
 
@@ -756,7 +752,7 @@ $$
 \end{aligned}
 $$
 
-### 优势函数（Advantage Function）与 TD 误差的等价性
+### 优势函数 / TD 误差等价性
 
 请仔细观察括号内部的项：
 $$
@@ -770,7 +766,7 @@ $$
 $$
 \begin{aligned}
 \mathbb{E} [ \delta_t \mid S_t = s, A_t = a ] &= \mathbb{E} [ R_{t+1} + \gamma v_\pi(S_{t+1}) - v_\pi(S_t) \mid S_t = s, A_t = a ] \\
-&= \underbrace{\mathbb{E} [ R_{t+1} + \gamma v_\pi(S_{t+1}) \mid S_t = s, A_t = a ]}_{根据贝尔曼方程，严格等于动作价值 q_\pi(s, a)} - v_\pi(s) \\
+&= \underbrace{\mathbb{E} [ R_{t+1} + \gamma v_\pi(S_{t+1}) \mid S_t = s, A_t = a ]}_{= q_\pi(s, a) \text{（贝尔曼方程）}} - v_\pi(s) \\
 &= q_\pi(s, a) - v_\pi(s) \\
 &\equiv A_\pi(s, a)
 \end{aligned}
@@ -782,7 +778,7 @@ $$
 
 ---
 
-## 微分分析与探索利用平衡
+## 微分分析 / 探索利用平衡
 
 将更新式改写为带有缩放系数的形式：
 $$
@@ -821,30 +817,21 @@ $$
 $$
 \begin{array}{l}
 \hline
-\textbf{Algorithm: } \text{One-step Actor–Critic (Episodic) for Estimating } \pi_\theta \approx \pi_* \\
+\textbf{Algorithm: }\text{One-step Actor–Critic (Episodic)} \\
 \hline
-\textbf{Input: } \text{A differentiable policy parameterization } \pi(a \mid s, \theta) \\
-\textbf{Input: } \text{A differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
-\textbf{Algorithm Parameters: } \text{Step sizes } \alpha^\theta > 0, \; \alpha^\mathbf{w} > 0, \text{ discount factor } \gamma \in (0, 1] \\
-\textbf{Initialize: } \text{Policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \text{ (e.g., to } \mathbf{0}\text{)} \\
+\textbf{Input: }\text{Policy }\pi(a \mid s, \theta), \; \text{critic }\hat{v}(s, \mathbf{w}) \\
+\textbf{Params: }\alpha^\theta > 0, \; \alpha^\mathbf{w} > 0, \; \gamma \in (0, 1] \\
+\textbf{Init: }\theta \in \mathbb{R}^{d'}, \; \mathbf{w} \in \mathbb{R}^d \text{ (e.g., to }\mathbf{0}\text{)} \\
 \hline
-\textbf{Loop forever } \text{(for each episode):} \\
-\quad \text{Initialize } S \text{ (first state of episode)} \\
-\quad I \leftarrow 1 \quad \text{// Initialize discount weighting factor } I = \gamma^0 = 1 \\
-\quad \textbf{Loop while } S \text{ is not terminal (for each time step):} \\
-\quad\quad \text{// Step 1: Actor samples an action from current policy:} \\
+\textbf{Loop forever }\text{(for each episode):} \\
+\quad \text{Init } S; \quad I \leftarrow 1 \quad \text{// discount weight } I = \gamma^t \\
+\quad \textbf{While } S \text{ is not terminal:} \\
 \quad\quad A \sim \pi(\cdot \mid S, \theta) \\
-\quad\quad \text{// Step 2: Execute action, observe reward and next state:} \\
 \quad\quad \text{Take action } A, \text{ observe } S', R \\
-\quad\quad \text{// Step 3: Critic evaluates the transition via one-step TD error:} \\
-\quad\quad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad (\text{if } S' \text{ is terminal, then } \hat{v}(S', \mathbf{w}) \doteq 0) \\
-\quad\quad \text{// Step 4: Critic parameter update (semi-gradient TD(0) value learning):} \\
+\quad\quad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad (\hat{v}(S_{\text{term}}) \doteq 0) \\
 \quad\quad \mathbf{w} \leftarrow \mathbf{w} + \alpha^\mathbf{w} \delta \nabla_\mathbf{w} \hat{v}(S, \mathbf{w}) \\
-\quad\quad \text{// Step 5: Actor parameter update (advantage policy gradient with discount weighting):} \\
 \quad\quad \theta \leftarrow \theta + \alpha^\theta I \delta \nabla_\theta \ln \pi(A \mid S, \theta) \\
-\quad\quad \text{// Step 6: Decay discount weighting factor and transition state:} \\
-\quad\quad I \leftarrow \gamma I \quad \text{// Maintains } I = \gamma^t \text{ incrementally} \\
-\quad\quad S \leftarrow S' \\
+\quad\quad I \leftarrow \gamma I; \quad S \leftarrow S' \\
 \hline
 \end{array}
 $$
@@ -859,7 +846,7 @@ $$
 
 ---
 
-## 平均奖励率与差分回报
+## 平均奖励率 / 差分回报
 
 ### 性能度量指标：平均奖励率 $r(\pi)$（ $\bar{r}_\pi$）
 定义性能度量函数 $J(\theta)$ 为长期的单步平均期望奖励：
@@ -950,7 +937,7 @@ $$
 $$
 \nabla_\theta r(\theta) = \sum_{a \in \mathcal{A}} \left[ \nabla_\theta \pi(a \mid s) q_\pi(s, a) + \pi(a \mid s) \sum_{s'} p(s' \mid s, a) \nabla_\theta v_\pi(s') \right] - \nabla_\theta v_\pi(s) \tag{3}
 $$
-**左端 $\nabla_\theta r(\theta) \equiv \nabla_\theta J(\theta)$ 是一个标量指标的梯度，与具体的初始状态 $s$ 没有任何关系！**因此，右端的取值对任意状态 $s$ 也恒为定值。我们在两端同时乘以平稳分布概率 $\mu(s)$ 并对所有状态 $s \in \mathcal{S}$ 求和（由于 $\sum_s \mu(s) = 1$，加权求和不会改变左端的值）：
+**左端 $\nabla_\theta r(\theta) \equiv \nabla_\theta J(\theta)$ 是一个标量指标的梯度，与具体的初始状态 $s$ 没有任何关系！** 因此，右端的取值对任意状态 $s$ 也恒为定值。我们在两端同时乘以平稳分布概率 $\mu(s)$ 并对所有状态 $s \in \mathcal{S}$ 求和（由于 $\sum_s \mu(s) = 1$，加权求和不会改变左端的值）：
 $$
 \begin{aligned}
 \nabla_\theta J(\theta) 
@@ -962,7 +949,10 @@ $$
 
 仔细观察式 (4) 中的第二项：交换关于 $s$ 和 $s'$ 的求和次序：
 $$
-\sum_{s \in \mathcal{S}} \mu(s) \sum_{a \in \mathcal{A}} \pi(a \mid s) \sum_{s'} p(s' \mid s, a) \nabla_\theta v_\pi(s') = \sum_{s'} \underbrace{\left[ \sum_{s \in \mathcal{S}} \mu(s) \sum_{a \in \mathcal{A}} \pi(a \mid s) p(s' \mid s, a) \right]}_{\text{根据平稳分布不变性定义 (13.16)，恰好等于 } \mu(s')} \nabla_\theta v_\pi(s')
+\begin{aligned}
+&\sum_{s \in \mathcal{S}} \mu(s) \sum_{a \in \mathcal{A}} \pi(a \mid s) \sum_{s'} p(s' \mid s, a) \nabla_\theta v_\pi(s') \\
+&\qquad= \sum_{s'} \underbrace{\left[ \sum_{s \in \mathcal{S}} \mu(s) \sum_{a \in \mathcal{A}} \pi(a \mid s) p(s' \mid s, a) \right]}_{\text{平稳分布不变性 (13.16): } = \mu(s')} \nabla_\theta v_\pi(s')
+\end{aligned}
 $$
 因此，第二项严格化简为：
 $$
@@ -972,7 +962,6 @@ $$
 $$
 \sum_{s'} \mu(s') \nabla_\theta v_\pi(s') - \sum_{s} \mu(s) \nabla_\theta v_\pi(s) \equiv \mathbf{0}
 $$
-
 
 最终得到：
 $$
@@ -1013,29 +1002,19 @@ $$
 $$
 \begin{array}{l}
 \hline
-\textbf{Algorithm: } \text{One-step Actor–Critic (Continuing) for Estimating } \pi_\theta \approx \pi_* \\
+\textbf{Algorithm: }\text{One-step Actor–Critic (Continuing)} \\
 \hline
-\textbf{Input: } \text{A differentiable policy parameterization } \pi(a \mid s, \theta) \\
-\textbf{Input: } \text{A differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
-\textbf{Algorithm Parameters: } \text{Step sizes } \alpha^\theta > 0, \; \alpha^\mathbf{w} > 0, \; \alpha^R > 0 \\
-\textbf{Initialize: } \text{Average reward estimate } \bar{R} \in \mathbb{R} \text{ (e.g., to } 0\text{)} \\
-\textbf{Initialize: } \text{Policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \text{ (e.g., to } \mathbf{0}\text{)} \\
-\textbf{Initialize: } \text{Initial state } S \in \mathcal{S} \text{ (e.g., to } s_0\text{)} \\
+\textbf{Input: }\text{Policy }\pi(a \mid s, \theta), \; \text{critic }\hat{v}(s, \mathbf{w}) \\
+\textbf{Params: }\alpha^\theta > 0, \; \alpha^\mathbf{w} > 0, \; \alpha^R > 0 \\
+\textbf{Init: }\bar{R} \in \mathbb{R}, \; \theta \in \mathbb{R}^{d'}, \; \mathbf{w} \in \mathbb{R}^d \text{ (to } 0\text{)}; \; S \in \mathcal{S} \\
 \hline
-\textbf{Loop forever } \text{(for each time step):} \\
-\quad \text{// Step 1: Actor samples an action from current stochastic policy:} \\
+\textbf{Loop forever }\text{(for each time step):} \\
 \quad A \sim \pi(\cdot \mid S, \theta) \\
-\quad \text{// Step 2: Execute action, observe immediate reward and next state:} \\
 \quad \text{Take action } A, \text{ observe } S', R \\
-\quad \text{// Step 3: Critic computes the differential one-step TD error:} \\
 \quad \delta \leftarrow R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
-\quad \text{// Step 4: Update average reward estimate (tracking global performance):} \\
-\quad \bar{R} \leftarrow \bar{R} + \alpha^R \delta \\
-\quad \text{// Step 5: Critic parameter update (semi-gradient TD(0) for differential value):} \\
+\quad \bar{R} \leftarrow \bar{R} + \alpha^R \delta \quad \text{// update avg reward} \\
 \quad \mathbf{w} \leftarrow \mathbf{w} + \alpha^\mathbf{w} \delta \nabla_\mathbf{w} \hat{v}(S, \mathbf{w}) \\
-\quad \text{// Step 6: Actor parameter update (policy gradient via differential TD error):} \\
 \quad \theta \leftarrow \theta + \alpha^\theta \delta \nabla_\theta \ln \pi(A \mid S, \theta) \\
-\quad \text{// Step 7: Transition to next state:} \\
 \quad S \leftarrow S' \\
 \hline
 \end{array}
@@ -1130,7 +1109,7 @@ $$
 
 ---
 
-###  均值梯度的物理机制：纠偏与牵引
+### 均值梯度物理机制：纠偏 / 牵引
 $$
 \Delta \theta_\mu \propto \delta_t \cdot \frac{a - \mu(s, \theta)}{\sigma(s, \theta)^2} \mathbf{x}_\mu(s)
 $$
@@ -1140,7 +1119,7 @@ $$
 * **若本次动作表现糟糕（优势 $\delta_t < 0$）**：更新量为负，参数会驱动中心基准 $\mu$ 远离这个错误动作；
 * **分母 $\sigma^2$ 项**：当方差很小时，说明策略很自信，此时一旦发现动作有偏差，梯度更新力度会被放大，迅速纠偏。
 
-### 标准差梯度的物理机制：自适应探索与收敛利用
+### 标准差梯度物理机制：探索 / 收敛利用
 $$
 \Delta \theta_\sigma \propto \delta_t \cdot \left( \frac{(a - \mu)^2}{\sigma^2} - 1 \right) \mathbf{x}_\sigma(s)
 $$
@@ -1162,4 +1141,3 @@ $$
 | **探索机制**      | **内生探索**：由高斯分布自身的方差 $\sigma$ 天然产生随机探索 | **外加噪声**：必须人为在确定性动作上叠加探索噪声             |
 | **梯度求解路径**  | 似然比对数技巧：$\mathbb{E}[\delta \nabla_\theta \ln \pi(A \mid S)]$，动作空间无需可微 | 链式法则：$\mathbb{E}[\nabla_\theta \mu(S) \nabla_a q(S, a)|_{a=\mu(S)}]$，**Critic 对动作必须可导** |
 | **同策略/异策略** | 天然为同策略                                                 | 天然支持完全异策略                                           |
-

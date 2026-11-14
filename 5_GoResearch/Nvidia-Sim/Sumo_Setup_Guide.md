@@ -1,8 +1,20 @@
+---
+title: "SUMO (RAI Institute 2026) MuJoCo 复现指南"
+type: setup
+domain: 仿真与环境配置
+aliases:
+  - "Sumo环境配置"
+  - "SUMO Setup"
+tags:
+  - setup
+  - simulation
+---
+
 # SUMO (RAI Institute 2026) 环境配置
 
 > **核心组件**：Ubuntu 22.04 LTS + Python 3.13 + MuJoCo 3.6.0 + ONNX Runtime (CPU Allocator) + Dora-rs 0.3.16 + Viser 0.2.7 + Pixi 0.84.1 
 > **硬件配置验证**：双卡 NVIDIA GeForce RTX 3090 (24GB × 2)
-> **前置依赖**：本教程**核心算法与控制策略继承自** [[Relic_Setup_Guide.md](file:///E:/Desktop/Documents/BIT/5_GoResearch/Nvidia-Sim/Relic_Setup_Guide.md)]。SUMO **直接复用 ReLIC 离线强化学习训练出的紧凑多肢体协同策略权重**，通过 C++ MuJoCo 仿真底座与交叉熵采样优化器（CEM）实现在线实时全身动态操作，**无需重新进行大规模强化学习训练**；网络与依赖镜像继承自 [[Common Environment.md](file:///E:/Desktop/Documents/BIT/5_GoResearch/Nvidia-Sim/Common%20Environment.md)]。
+> **前置依赖**：本教程**核心算法与控制策略继承自** [[Relic_Setup_Guide]]。SUMO **直接复用 ReLIC 离线强化学习训练出的紧凑多肢体协同策略权重**，通过 C++ MuJoCo 仿真底座与交叉熵采样优化器（CEM）实现在线实时全身动态操作，**无需重新进行大规模强化学习训练**；网络与依赖镜像继承自 [[Common Environment]]。
 
 ---
 
@@ -10,28 +22,7 @@
 
 **分层具身智能架构（Hierarchical Embodied Control）**：
 
-```mermaid
-flowchart TD
-    subgraph Offline["1. 离线强化学习 (ReLIC - 详见 Relic_Setup_Guide.md)"]
-        IsaacLab["NVIDIA Isaac Sim + Isaac Lab"]
-        RLTraining["大规模并行探索 (4096 并行环境)"]
-        TrainedPolicy["输出端到端运动策略: spot_locomotion.onnx (~800 KB)"]
-        IsaacLab --> RLTraining --> TrainedPolicy
-    end
-
-    subgraph Online["2. 在线模型预测控制 (SUMO)"]
-        direction TB
-        HighTask["高级任务目标 (推重木箱 / 扶起轮胎 / 推门)"]
-        CEM["采样优化器 (CEM Planner - 高频动态决策)"]
-        FastMuJoCo["C++ MuJoCo 多线程并行前向 Rollout 积分器"]
-        Execution["机器人全身执行与实时 3D Web 可视化 (Viser 8080)"]
-        
-        HighTask --> CEM
-        TrainedPolicy -.->|"直接加载做底层执行器"| FastMuJoCo
-        CEM <--> FastMuJoCo
-        CEM --> Execution
-    end
-```
+![ReLIC 离线训练 / SUMO 在线控制架构](image/Sumo_pipeline.svg)
 
 ### 两种范式的本质差异
 1. **ReLIC (离线学习)**：
@@ -64,7 +55,7 @@ SUMO 与 JUDO 官方采用新一代基于 Rust 的包管理工具 **Pixi**：
 
 ---
 
-## 三、 源码与国内透明代理
+## 三、 源码 / 国内透明代理
 
 ### 1. 源码部署拓扑
 ```text
@@ -122,7 +113,7 @@ ls -la .pixi/envs/default/bin/python
 
 ---
 
-## 五、 C++ 扩展编译 (`mujoco_extensions` 与 `g1_extensions`)
+## 五、 C++ 扩展编译（`mujoco_extensions` / `g1_extensions`）
 
 SUMO 高性能物理前向 Rollout 依赖编译的原生 C++ 动态链接库：
 
@@ -145,7 +136,7 @@ print('SUCCESS: All C++ Extensions Imported Cleanly!')
 
 ---
 
-## 六、 机器人与环境资产 (Meshes 与 Menagerie 缓存)
+## 六、 机器人 / 环境资产（Meshes / Menagerie）
 
 SUMO 在仿真启动时需要加载 Spot 机器人的 3D 网格文件和 MJCF 物理描述模型：
 
@@ -171,7 +162,7 @@ pixi run python -c "from robot_descriptions import spot_mj_description; print('S
 
 ---
 
-## 七、 启动 Dora-rs 分布式数据流任务与后台守护
+## 七、 Dora-rs 分布式数据流 / 后台守护
 
 SUMO 采用现代化分布式数据流中间件 **Dora-rs**，启动后系统并发拉起 3 个协同节点：
 - **`simulation` 节点**：高频 MuJoCo 动力学仿真步进；
@@ -199,7 +190,7 @@ netstat -tuln | grep 8080
 
 ---
 
-## 八、 3D 实时交互与 SSH 
+## 八、 3D 实时交互 / SSH
 
 由于服务器位于机房且无独立公网 IP，通过 SSH 本地端口转发在本地浏览器中直接访问 3D 可视化界面：
 

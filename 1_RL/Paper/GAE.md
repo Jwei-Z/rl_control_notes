@@ -1,3 +1,48 @@
+---
+title: High-Dimensional Continuous Control Using Generalized Advantage Estimation
+type: paper
+institution: University of California, Berkeley (UC Berkeley)
+venue: ICLR 2016 (arXiv:1506.02438)
+year: 2016
+domain: 强化学习基础
+aliases:
+  - GAE
+  - 广义优势估计
+tags:
+  - paper
+  - rl
+  - advantage-estimation
+  - actor-critic
+prerequisites:
+  - "[[马尔可夫决策过程MDP]]"
+  - "[[贝尔曼方程与值迭代]]"
+  - "[[时序差分与自举]]"
+  - "[[策略梯度定理与Actor-Critic]]"
+  - "[[广义优势估计GAE]]"
+---
+
+# High-Dimensional Continuous Control Using Generalized Advantage Estimation (GAE)
+
+**核心问题**：长时域连续控制中，纯蒙特卡洛回报方差过大、1 步 TD 自举偏差显著；GAE 通过参数 $\lambda \in [0,1]$ 在所有 $k$ 步 TD 残差上做指数加权平均，实现连续的偏差-方差权衡。
+
+> * **研究机构**：University of California, Berkeley (UC Berkeley)
+> * **发表出处**：*International Conference on Learning Representations (ICLR 2016)* / `arXiv:1506.02438`
+
+## 全文工作流程
+
+为串联全文理论推导与算法执行步骤，以下给出 GAE 在三维高自由度机器人连续控制中的完整闭环数据流图及各阶段对照表：
+
+![GAE 全局执行流水线](image/GAE_pipeline.svg)
+
+| 阶段 | 模块 | 输入 | 核心方程 / 算子 | 输出 | 章节 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **阶段 1** | **轨迹采样（$\gamma$-无偏建模）** | 当前策略 $\pi_{\theta_k}$、折现因子 $\gamma$ | 采集轨迹 $\{s_t, a_t, r_t\}$；利用基线不变性（Proposition 1）消去状态依赖基线 $b_t(s_t) = V_\phi(s_t)$ | 采样轨迹批次 $\{s_{0:T}^n, a_{0:T}^n, r_{0:T}^n\}_{n=1}^N$ | §1.1–1.2、§2.1–2.3 |
+| **阶段 2** | **单步 TD 残差（势能重塑奖励）** | 即时奖励 $r_t$、状态价值 $V_\phi(s_t), V_\phi(s_{t+1})$ | $\delta_t^V = r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)$（等价于以 $\Phi = V_\phi$ 对原 MDP 做势能奖励重塑 $\tilde{r}_t$） | 时间步残差序列 $\{\delta_0^V, \delta_1^V, \dots, \delta_{T-1}^V\}$ | §3、§4.1–4.2 |
+| **阶段 3** | **多步指数加权优势 $\hat{A}_t^{\text{GAE}(\gamma,\lambda)}$** | 残差序列 $\{\delta_t^V\}$、超参数 $\lambda \in [0, 1]$ | 几何级数加权全部 $k$-步估计器：$\hat{A}_t^{\text{GAE}(\gamma,\lambda)} = \sum_{l=0}^{\infty}(\gamma\lambda)^l \delta_{t+l}^V = \delta_t^V + \gamma\lambda \hat{A}_{t+1}^{\text{GAE}}$ | 低方差优势序列 $\{\hat{A}_t^{\text{GAE}}\}$、时间折叠有效窗口 $\frac{1}{1-\gamma\lambda}$ | §3.1–3.2、§4.3 |
+| **阶段 4** | **信任域策略 / 价值网络更新** | 优势序列 $\{\hat{A}_t^{\text{GAE}}\}$、对数梯度 $\nabla_\theta \log \pi_\theta$ | 代入经验策略梯度 $\hat{g} = \frac{1}{N}\sum_{n,t}\nabla_\theta \log \pi_\theta(a_t^n \mid s_t^n)\hat{A}_t^{\text{GAE}}$，配合 [[重要性采样与TRPO信任域\|TRPO]] / [[PPO]] 更新 $\theta_k$ 并拟合 $V_\phi$ | 更新后参数 $\theta_{k+1}, \phi_{k+1}$ | §2.1、§3.2 |
+
+---
+
 # 1. 动机
 
 ## 1.1 时间信用分配难题
@@ -14,7 +59,7 @@
 
 ---
 
-# 2. 策略梯度表达与 $\gamma$-无偏估计理论
+# 2. $\gamma$-无偏策略梯度估计理论
 
 ## 2.1 寻找最佳的策略更新方向
 
@@ -29,9 +74,9 @@ $$
 3. $\sum_{t'=t}^\infty r_{t'} - b(s_t)$：进一步减去与动作无关的基线，再次削减方差；
 4. $Q^\pi(s_t, a_t)$：用积分期望代替随机采样；
 5. $A^\pi(s_t, a_t)$：**理论上能取得最低方差的标尺**；
-6. $r_t + V^\pi(s_{t+1}) - V^\pi(s_t)$（单步 TD 残差）：完全靠单步估计自举。
+6. $r_t + V^\pi(s_{t+1}) - V^\pi(s_t)$（[[时序差分与自举|单步 TD 残差]]）：完全靠单步估计自举。
 
-为了准确定义优势函数，作者给出了状态价值与动作价值的积分形式：
+为了准确定义[[广义优势估计GAE|优势函数]]，作者给出了状态价值与动作价值的积分形式：
 $$
 V^\pi(s_t) \triangleq \mathbb{E}_{\substack{s_{t+1:\infty} \sim P, \\ a_{t:\infty} \sim \pi}} \left[ \sum_{l=0}^\infty r_{t+l} \right] \\
 Q^\pi(s_t, a_t) \triangleq \mathbb{E}_{\substack{s_{t+1:\infty} \sim P, \\ a_{t+1:\infty} \sim \pi}} \left[ \sum_{l=0}^\infty r_{t+l} \right] \tag{2}
@@ -43,9 +88,9 @@ $$
 
 ---
 
-## 2.2 折现参数 $\gamma$ 与 $\gamma$-无偏理论
+## 2.2 折现因子 $\gamma$ 的无偏理论
 
-在无限时间步中，累积和可能发散，**$\gamma$ 的本质不是物理环境的要求，而是一个纯粹的“人工方差截断参数”！**引入折现因子 $\gamma \in [0, 1)$：
+在无限时间步中，累积和可能发散，**$\gamma$ 的本质不是物理环境的要求，而是一个纯粹的“人工方差截断参数”！** 引入[[贝尔曼方程与值迭代|折现因子]] $\gamma \in [0, 1)$：
 $$
 V^{\pi, \gamma}(s_t) \triangleq \mathbb{E}_{\substack{s_{t+1:\infty} \sim P, \\ a_{t:\infty} \sim \pi}} \left[ \sum_{l=0}^\infty \gamma^l r_{t+l} \right], \quad Q^{\pi, \gamma}(s_t, a_t) \triangleq \mathbb{E}_{\substack{s_{t+1:\infty} \sim P, \\ a_{t+1:\infty} \sim \pi}} \left[ \sum_{l=0}^\infty \gamma^l r_{t+l} \right] \tag{4}
 $$
@@ -69,7 +114,7 @@ $$
 
 ---
 
-## 2.3 命题 1与基线不变性
+## 2.3 命题 1：基线不变性
 
 我们在估计优势时，减去一个基线到底会不会把梯度算偏？需要满足什么条件？
 
@@ -87,9 +132,8 @@ $$
 \mathbb{E}_{s_{0:t}, a_{0:t-1}} \left[ b_t(s_{0:t}, a_{0:t-1}) \cdot \mathbf{\mathbb{E}_{a_t \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a_t \mid s_t) \mid s_t \right]} \right]
 $$
 
-> [!IMPORTANT]
->
-> “重期望法则”（Law of Total Expectation），在概率论中也常被称为**全期望公式**或**迭代期望定律**。
+> **重期望法则（Law of Total Expectation）证明细节**：
+> “重期望法则”在概率论中也常被称为**全期望公式**或**迭代期望定律**。
 >
 > 它的核心数学表达是：
 > $$
@@ -109,7 +153,7 @@ $$
 > $$
 >  P(s_{0:t}, a_{0:t}) = P(s_{0:t}, a_{0:t-1}) \cdot P(a_t | s_{0:t}, a_{0:t-1}) 
 > $$
-> 根据马尔可夫性，当前动作 $a_t$ 只取决于当前状态 $s_t$，所以 $P(a_t | s_{0:t}, a_{0:t-1}) = P(a_t | s_t) = \pi_\theta(a_t | s_t)$。因此，我们可以把对 $(s_{0:t}, a_{0:t})$ 的联合期望，**拆解为两层**：外层是对历史 $(s_{0:t}, a_{0:t-1})$ 的期望，内层是在给定历史条件下，对当前动作 $a_t$ 的条件期望。
+> 根据[[马尔可夫决策过程MDP|马尔可夫]]性，当前动作 $a_t$ 只取决于当前状态 $s_t$，所以 $P(a_t | s_{0:t}, a_{0:t-1}) = P(a_t | s_t) = \pi_\theta(a_t | s_t)$。因此，我们可以把对 $(s_{0:t}, a_{0:t})$ 的联合期望，**拆解为两层**：外层是对历史 $(s_{0:t}, a_{0:t-1})$ 的期望，内层是在给定历史条件下，对当前动作 $a_t$ 的条件期望。
 >
 > **3. 具体应用过程：**
 > *   固定历史 $(s_{0:t}, a_{0:t-1})$。
@@ -120,7 +164,7 @@ $$
 > $$
 > \mathbb{E}_{s_{0:t}, a_{0:t-1}} \Big[ b_t(s_{0:t}, a_{0:t-1}) \cdot \mathbb{E}_{a_t \sim \pi_\theta} [ \nabla_\theta \log \pi_\theta(a_t | s_t) \mid s_t ] \Big]
 > $$
-> 在强化学习中，$b_t$（通常是一个基线 baseline 或优势函数）是用来评估在状态 $s_t$ 下采取动作 $a_t$ 的好坏的。这个评估值 $b_t$ 在采取动作 $a_t$ **之前**就已经根据历史计算出来了，它**不依赖于**当前具体采样出的动作 $a_t$。通过重期望法则，我们可以**把跟动作 $a_t$ 无关的权重 $b_t$ 提出来**，让内层期望专心处理 $\nabla_\theta \log \pi_\theta(a_t|s_t)$。这是推导策略梯度中“对数导数技巧”（$\nabla \pi = \pi \nabla \log \pi$）非常关键的一步，它让期望和梯度能够交换位置。
+> 在强化学习中，$b_t$（通常是一个基线 baseline 或[[广义优势估计GAE|优势函数]]）是用来评估在状态 $s_t$ 下采取动作 $a_t$ 的好坏的。这个评估值 $b_t$ 在采取动作 $a_t$ **之前**就已经根据历史计算出来了，它**不依赖于**当前具体采样出的动作 $a_t$。通过重期望法则，我们可以**把跟动作 $a_t$ 无关的权重 $b_t$ 提出来**，让内层期望专心处理 $\nabla_\theta \log \pi_\theta(a_t|s_t)$。这是推导策略梯度中“对数导数技巧”（$\nabla \pi = \pi \nabla \log \pi$）非常关键的一步，它让期望和梯度能够交换位置。
 >
 
 因为对数似然对策略自身的积分恒为零：
@@ -128,7 +172,7 @@ $$
 \mathbb{E}_{a_t \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a_t \mid s_t) \mid s_t \right] = \int \pi_\theta \frac{\nabla_\theta \pi_\theta}{\pi_\theta} da_t = \nabla_\theta \int \pi_\theta da_t = \nabla_\theta (1) = \mathbf{0}
 $$
 
-* **解决的痛点**：从数学上坚实证明了——**在优势估计器里任意减去诸如 $V(s_t)$ 等基线项，绝不会给策略梯度引入丝毫偏差！**
+* **理论意义**：从数学上证明了——**在优势估计器中减去状态依赖的基线项（如 $V(s_t)$），不会给策略梯度引入任何偏差**，从而在不改变优化期望的前提下显著降低方差。
 
 ---
 
@@ -144,10 +188,14 @@ $$
 $$
 如果网络是完美的（$V = V^{\pi, \gamma}$），对下一状态 $s_{t+1}$ 求条件期望：
 $$
-\mathbb{E}_{s_{t+1} \sim P} \left[ \delta_t^{V^{\pi, \gamma}} \;\Big|\; s_t, a_t \right] = \mathbb{E}_{s_{t+1} \sim P} \left[ r_t + \gamma V^{\pi, \gamma}(s_{t+1}) - V^{\pi, \gamma}(s_t) \;\Big|\; s_t, a_t \right] = Q^{\pi, \gamma}(s_t, a_t) - V^{\pi, \gamma}(s_t) = A^{\pi, \gamma}(s_t, a_t) \tag{10}
+\begin{aligned}
+\mathbb{E}_{s_{t+1} \sim P} \left[ \delta_t^{V^{\pi, \gamma}} \;\Big|\; s_t, a_t \right]
+&= \mathbb{E}_{s_{t+1} \sim P} \left[ r_t + \gamma V^{\pi, \gamma}(s_{t+1}) - V^{\pi, \gamma}(s_t) \;\Big|\; s_t, a_t \right] \\
+&= Q^{\pi, \gamma}(s_t, a_t) - V^{\pi, \gamma}(s_t) = A^{\pi, \gamma}(s_t, a_t)
+\end{aligned} \tag{10}
 $$
 
-* **物理含义**：**单步 TD 残差 $\delta_t^V$ 是真实优势函数的一个单步抽样估计**。
+* **物理含义**：**[[时序差分与自举|单步 TD 残差]] $\delta_t^V$ 是真实优势函数的一个单步抽样估计**。
 * **致命问题**：它只有在 $V$ 绝对精确时才无偏；一旦神经网络有拟合误差，$\delta_t^V$ 就会产生极大的单步偏差。
 
 ---
@@ -179,11 +227,11 @@ $$
   $$
   \hat{A}_t^{(\infty)} \triangleq \sum_{l=0}^\infty \gamma^l \delta_{t+l}^V = -V(s_t) + \sum_{l=0}^\infty \gamma^l r_{t+l} \tag{15}
   $$
-  尾部项 $\gamma^k V \to 0$ 彻底消失！估计器完全变成了纯蒙特卡洛经验回报减基线。**此时偏差彻底为 0，但所有随机奖励累加导致方差巨大**
+  尾部项 $\gamma^k V \to 0$ 彻底消失！估计器完全变成了纯[[Chapter_5_Monte Carlo Methods|蒙特卡洛]]经验回报减基线。**此时偏差彻底为 0，但所有随机奖励累加导致方差巨大**
 
 ---
 
-## 3.2 指数加权平均与 GAE
+## 3.2 GAE 指数加权平均
 
 既然 $k=1$ 偏差大方差小，而 $k=\infty$ 偏差零方差大，那到底选 $k=几$ 最好？选任何固定的整数 $k$ 都太死板了！受经典 $\text{TD}(\lambda)$ 启发，作者提出：**将所有步数 $k \in [1, \infty)$ 的估计器，按照几何级数权重 $(1-\lambda)\lambda^{k-1}$ 进行凸组合加权平均！**
 
@@ -193,9 +241,13 @@ $$
 
 $$
 \begin{aligned}
-&= (1 - \lambda) \Big[ \delta_t^V + \lambda(\delta_t^V + \gamma \delta_{t+1}^V) + \lambda^2(\delta_t^V + \gamma \delta_{t+1}^V + \gamma^2 \delta_{t+2}^V) + \dots \Big] \\
-&= (1 - \lambda) \left[ \delta_t^V \underbrace{(1 + \lambda + \lambda^2 + \dots)}_{\text{级数求和 } = \frac{1}{1-\lambda}} + \gamma \delta_{t+1}^V \underbrace{(\lambda + \lambda^2 + \dots)}_{\text{级数求和 } = \frac{\lambda}{1-\lambda}} + \gamma^2 \delta_{t+2}^V \underbrace{(\lambda^2 + \lambda^3 + \dots)}_{\text{级数求和 } = \frac{\lambda^2}{1-\lambda}} + \dots \right] \\
-&= (1 - \lambda) \left[ \delta_t^V \left(\frac{1}{1-\lambda}\right) + \gamma \delta_{t+1}^V \left(\frac{\lambda}{1-\lambda}\right) + \gamma^2 \delta_{t+2}^V \left(\frac{\lambda^2}{1-\lambda}\right) + \dots \right]
+\hat{A}_t^{\text{GAE}(\gamma, \lambda)} &= (1 - \lambda) \Big[ \delta_t^V + \lambda(\delta_t^V + \gamma \delta_{t+1}^V) + \lambda^2(\delta_t^V + \gamma \delta_{t+1}^V + \gamma^2 \delta_{t+2}^V) + \cdots \Big] \\
+&= (1 - \lambda) \Big[
+  \delta_t^V \underbrace{(1 + \lambda + \lambda^2 + \cdots)}_{= \frac{1}{1-\lambda}}
+  + \gamma \delta_{t+1}^V \underbrace{(\lambda + \lambda^2 + \cdots)}_{= \frac{\lambda}{1-\lambda}}
+  + \cdots
+\Big] \\
+&= (1 - \lambda) \left[ \delta_t^V \left(\frac{1}{1-\lambda}\right) + \gamma \delta_{t+1}^V \left(\frac{\lambda}{1-\lambda}\right) + \gamma^2 \delta_{t+2}^V \left(\frac{\lambda^2}{1-\lambda}\right) + \cdots \right]
 \end{aligned}
 $$
 
@@ -210,8 +262,9 @@ $$
   $$
 * **特例 2：$\lambda = 1$（公式 18）**
   $$
-  \hat{A}_t^{\text{GAE}(\gamma, 1)} = \sum_{l=0}^\infty \gamma^l r_{t+l} - V(s_t) \quad (\text{纯蒙特卡洛减基线，严格无偏，方差最大})
+  \hat{A}_t^{\text{GAE}(\gamma, 1)} = \sum_{l=0}^\infty \gamma^l r_{t+l} - V(s_t) \quad (\text{纯 MC 减基线})
   $$
+  *(特性：严格无偏，但累积整条轨迹噪声导致方差最大。)*
 
 将 GAE 代入策略梯度的近似算式为：
 $$
@@ -222,7 +275,7 @@ $$
 
 ---
 
-# 4. 为什么 GAE 有用？奖励重塑与响应函数
+# 4. 奖励重塑理论依据
 
 ## 4.1 经典奖励重塑
 
@@ -247,8 +300,11 @@ $$
 $$
 直接把公式 (21) 的结果代入进去：
 $$
-\tilde{V}^{\pi, \gamma}(s_t) = \mathbb{E} \left[ \sum_{l=0}^\infty \gamma^l r_{t+l} - \Phi(s_t) \right] = \underbrace{\mathbb{E} \left[ \sum_{l=0}^\infty \gamma^l r_{t+l} \right]}_{\text{这正是原版世界的 } V^{\pi, \gamma}(s_t)} - \Phi(s_t) \\
-\tilde{V}^{\pi, \gamma}(s) = V^{\pi, \gamma}(s) - \Phi(s) \tag{23}
+\begin{aligned}
+\tilde{V}^{\pi, \gamma}(s_t) &= \mathbb{E} \left[ \sum_{l=0}^\infty \gamma^l r_{t+l} - \Phi(s_t) \right] \\
+&= \underbrace{\mathbb{E} \left[ \sum_{l=0}^\infty \gamma^l r_{t+l} \right]}_{V^{\pi, \gamma}(s_t)} - \Phi(s_t) \\
+\tilde{V}^{\pi, \gamma}(s) &= V^{\pi, \gamma}(s) - \Phi(s)
+\end{aligned} \tag{23}
 $$
 同理，对动作价值函数 $\tilde{Q}^{\pi, \gamma}$ 求期望，：
 $$
@@ -264,13 +320,13 @@ $$
 
 ---
 
-## 4.2 重塑与 GAE 的合体
+## 4.2 势能重塑下的 GAE 等价形式
 
 如果我们把势能函数设为神经网络价值估计 $\Phi = V$，看看重塑奖励变成了什么：
 $$
 \tilde{r} = r_t + \gamma V(s_{t+1}) - V(s_t) = \delta_t^V \quad (\textbf{重塑奖励正好就是 TD 残差！})
 $$
-此时，如果在这个重塑的 MDP 中，使用一个**更激进的折现因子 $\gamma\lambda$** 求回报：
+此时，如果在这个重塑的 MDP 中，使用一个**更激进的[[贝尔曼方程与值迭代|折现因子]] $\gamma\lambda$** 求回报：
 $$
 \sum_{l=0}^\infty (\gamma \lambda)^l \tilde{r}(s_{t+l}, a_{t+l}, s_{t+l+1}) = \sum_{l=0}^\infty (\gamma \lambda)^l \delta_{t+l}^V = \hat{A}_t^{\text{GAE}(\gamma, \lambda)} \tag{25}
 $$
@@ -279,5 +335,12 @@ $$
 
 ---
 
-## 4.3 响应函数与时间折叠
+## 4.3 响应函数（时间折叠视野）
 
+为了量化动作 $a_t$ 对未来每一步奖励的真实因果贡献，论文定义**响应函数（Response Function）**：
+$$
+\chi(l; s_t, a_t) \triangleq \mathbb{E}\left[ r_{t+l} \mid s_t, a_t \right] - \mathbb{E}\left[ r_{t+l} \mid s_t \right], \quad l = 0, 1, 2, \dots
+$$
+
+- 当动作 $a_t$ 的影响随着时间推进快速衰减（即对于较大的 $l$，$\chi(l; s_t, a_t) \approx 0$）时，精确计算无限远步奖励只会白白引入与当前动作无关的环境噪声。
+- 将有效衰减乘子 $\gamma\lambda < 1$ 视作一个时间折叠系数，等价于把有效信用分配窗口压缩到约 $\frac{1}{1 - \gamma\lambda}$ 步之内（例如 $\gamma=0.99, \lambda=0.95$ 时有效视野约 $17$ 步）：既滤除了远期随机噪声，又保留了对核心因果回报的敏感度。

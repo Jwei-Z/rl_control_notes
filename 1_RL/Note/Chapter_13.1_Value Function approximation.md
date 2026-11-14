@@ -1,3 +1,19 @@
+---
+title: "Chapter 13.1: Value Function Approximation"
+type: course
+domain: 强化学习理论
+course: Sutton & Barto RL
+aliases:
+  - "RL第13.1章：价值函数近似"
+tags:
+  - course
+  - rl
+  - sutton-barto
+prerequisites:
+  - "[[时序差分与自举]]"
+  - "[[策略梯度定理与Actor-Critic]]"
+---
+
 # 从表格到函数
 
 ## 表格型表示
@@ -77,7 +93,7 @@ $$
 
 ---
 
-##  逼近代价与高阶多项式逼近
+## 逼近代价 / 高阶多项式逼近
 
 存储维度的压缩与泛化能力的获取不是免费的，它必须付出相应的理论代价：**状态价值无法再被完全精确地表示**。 
 用低维度的参数向量去表征高维乃至无限维的数据集，在信息论层面必然发生信息损失。一条自由度极低的一阶直线几乎不可能同时精准穿过空间中分布复杂的离散散点，这正是该方法被称为“近似”的本质原因。为提高拟合精度，可以使用更高阶的多项式曲线：
@@ -166,7 +182,7 @@ w_{t+1} = w_t + \alpha_t \big(v_\pi(s_t) - \hat{v}(s_t, w_t)\big) \nabla_w \hat{
 $$
 虽然摆脱了对全局期望的积分求和，但式中的真实值 $v_\pi(s_t)$ 仍然是黑箱未知的（它正是强化学习要估计的对象）。必须寻找合适的估计量作为代用目标。
 
-### 目标的引入：蒙特卡洛与时序差分
+### 目标设定：蒙特卡洛 vs. 时序差分
 针对未知真值 $v_\pi(s_t)$，存在两种核心替代方案：
 
 * **方案一：基于蒙特卡洛回报替代** 
@@ -215,7 +231,7 @@ $$
    w_{t+1} = w_t + \alpha_t \big[ r_{t+1} + \gamma \hat{v}(s_{t+1}, w_t) - \hat{v}(s_t, w_t) \big] \nabla_w \hat{v}(s_t, w_t)
    $$
 
-之所以说上述故事线在数学上不严格，核心矛盾在于：**最终得到的 TD 算法，根本没有在最小化最初设定的均方误差目标函数 $J(w)$！**在自举替换中，我们将目标项设为 $U_t(w) = r_{t+1} + \gamma \hat{v}(s_{t+1}, w)$。**这个目标自身显式地包含了待优化的参数向量 $w$** 。如果严格对二次损失 $\frac{1}{2}\big(U_t(w) - \hat{v}(s_t, w)\big)^2$ 关于 $w$ 求全导数，根据复合函数链式法则，导数应当包含两项：
+之所以说上述故事线在数学上不严格，核心矛盾在于：**最终得到的 TD 算法，根本没有在最小化最初设定的均方误差目标函数 $J(w)$！** 在自举替换中，我们将目标项设为 $U_t(w) = r_{t+1} + \gamma \hat{v}(s_{t+1}, w)$。**这个目标自身显式地包含了待优化的参数向量 $w$** 。如果严格对二次损失 $\frac{1}{2}\big(U_t(w) - \hat{v}(s_t, w)\big)^2$ 关于 $w$ 求全导数，根据复合函数链式法则，导数应当包含两项：
 
 $$
 \nabla_w \left\{ \frac{1}{2}\big(U_t(w) - \hat{v}(s_t, w)\big)^2 \right\} = -\big( U_t(w) - \hat{v}(s_t, w) \big) \cdot \big[ \nabla_w \hat{v}(s_t, w) - \gamma \nabla_w \hat{v}(s_{t+1}, w) \big]
@@ -341,25 +357,28 @@ $$
   $$
 * **线性函数逼近特例**：当动作价值表示为特征向量 $\phi(s, a) \in \mathbb{R}^m$ 与参数矢量 $w$ 的线性内积 $\hat{q}(s, a, w) = \phi^\top(s, a) w$ 时，梯度为 $\nabla_w \hat{q}(s, a, w) = \phi(s, a)$。
   $$
-  w_{t+1} = w_t + \alpha_t \left[ r_{t+1} + \gamma \max_{a \in \mathcal{A}(s_{t+1})} \phi^\top(s_{t+1}, a) w_t - \phi^\top(s_t, a_t) w_t \right] \phi(s_t, a_t)
+  \begin{aligned}
+  w_{t+1} = w_t + \alpha_t \Big[ & r_{t+1} + \gamma \max_{a \in \mathcal{A}(s_{t+1})} \phi^\top(s_{t+1}, a) w_t \\
+  & - \phi^\top(s_t, a_t) w_t \Big] \phi(s_t, a_t)
+  \end{aligned}
   $$
 
 $$
 \begin{array}{l}
 \hline
-\textbf{Algorithm 1: } \text{Q-learning with Value Function Approximation (On-policy Version)} \\
+\textbf{Algorithm 1: } \text{Q-learning with Value Function Approximation (On-policy)} \\
 \hline
-\textbf{Input: } \text{Differentiable function } \hat{q}(s, a, w), \text{ step sizes } \{\alpha_t\}, \text{ exploration } \epsilon \in (0, 1), \text{ discount } \gamma \in (0, 1] \\
+\textbf{Input: } \text{Differentiable } \hat{q}(s, a, w), \text{ step sizes } \{\alpha_t\}, \; \epsilon \in (0, 1), \; \gamma \in (0, 1] \\
 \textbf{Initialize: } \text{Initial parameter } w_0 \in \mathbb{R}^m, \text{ initial behavior policy } \pi_0 \\
-\textbf{Goal: } \text{Learn an optimal policy leading the agent to the target state from start state } s_0 \\
+\textbf{Goal: } \text{Learn an optimal policy from start state } s_0 \text{ to target state} \\
 \hline
 \textbf{for } \text{each episode } k = 1, 2, \dots \textbf{ do} \\
 \quad \text{Initialize start state } s_0 \\
 \quad \textbf{while } s_t \text{ is not terminal} \textbf{ do} \\
-\quad\quad \text{Sample and execute action } a_t \sim \pi_t(s_t) \\
-\quad\quad \text{Interact with environment, observe immediate reward } r_{t+1} \text{ and next state } s_{t+1} \\
+\quad\quad \text{Sample and execute } a_t \sim \pi_t(s_t) \text{, observe } r_{t+1}, s_{t+1} \\
 \quad\quad \text{// Step 1: Parameter Update (TD learning with greedy target):} \\
-\quad\quad w_{t+1} \leftarrow w_t + \alpha_t \left[ r_{t+1} + \gamma \max_{a \in \mathcal{A}(s_{t+1})} \hat{q}(s_{t+1}, a, w_t) - \hat{q}(s_t, a_t, w_t) \right] \nabla_w \hat{q}(s_t, a_t, w_t) \\
+\quad\quad \delta_t \leftarrow r_{t+1} + \gamma \max_{a \in \mathcal{A}(s_{t+1})} \hat{q}(s_{t+1}, a, w_t) - \hat{q}(s_t, a_t, w_t) \\
+\quad\quad w_{t+1} \leftarrow w_t + \alpha_t \delta_t \nabla_w \hat{q}(s_t, a_t, w_t) \\
 \quad\quad \text{// Step 2: Policy Improvement (}\epsilon\text{-greedy update):} \\
 \quad\quad a^* \leftarrow \arg\max_{a \in \mathcal{A}(s_t)} \hat{q}(s_t, a, w_{t+1}) \\
 \quad\quad \pi_{t+1}(a \mid s_t) \leftarrow \begin{cases} 
@@ -377,7 +396,7 @@ $$
 
 # Deep Q-learning 
 
-## 目标函数与梯度计算的数学困境
+## 目标函数 / 梯度计算的数学困境
 
 在 DQN 中，神经网络充当了**端到端的非线性函数逼近器**，避免了传统线性方法中极度依赖专家经验的手工特征工程。
 
@@ -433,27 +452,24 @@ $$
 $$
 \begin{array}{l}
 \hline
-\textbf{Algorithm 2: } \text{Deep Q-Network (DQN) with Experience Replay and Target Network} \\
+\textbf{Algorithm 2: } \text{DQN with Experience Replay and Target Network} \\
 \hline
-\textbf{Require: } \text{Evaluation network } \hat{q}(s, a, w), \text{ target network } \hat{q}(s, a, w_T), \text{ replay buffer } \mathcal{B}, \text{ batch size } B, \\
-\phantom{\textbf{Require: }} \text{target sync frequency } C, \text{ step size } \alpha > 0, \text{ discount factor } \gamma \in (0, 1], \text{ behavior policy } \pi_b \\
-\textbf{Initialize: } \text{Randomly initialize } w, \text{ set } w_T \leftarrow w; \text{ store transitions } (s, a, r, s') \text{ into } \mathcal{B} \text{ by running } \pi_b \\
+\textbf{Require: } \text{Eval net } \hat{q}(s, a, w), \text{ target net } \hat{q}(s, a, w_T), \text{ buffer } \mathcal{B}, \text{ batch } B, \\
+\phantom{\textbf{Require: }} \text{sync freq } C, \text{ step size } \alpha > 0, \; \gamma \in (0, 1], \text{ policy } \pi_b \\
+\textbf{Initialize: } w \text{ randomly}, \; w_T \leftarrow w; \text{ fill } \mathcal{B} \text{ with } (s, a, r, s') \text{ via } \pi_b \\
 \hline
 \textbf{for } \text{each training iteration } t = 1, 2, \dots \textbf{ do} \\
-\quad \text{Sample a random mini-batch of } B \text{ transitions } \{(s_j, a_j, r_j, s_j')\}_{j=1}^B \sim \mathcal{B} \text{ uniformly} \\
+\quad \text{Sample mini-batch } \{(s_j, a_j, r_j, s_j')\}_{j=1}^B \sim \mathcal{B} \text{ uniformly} \\
 \quad \textbf{for } \text{each sample } j = 1, \dots, B \textbf{ do} \\
-\quad\quad \text{Compute regression target with frozen target network } w_T\text{:} \\
+\quad\quad \text{Compute regression target using frozen } w_T\text{:} \\
 \quad\quad y_j \leftarrow \begin{cases} 
 r_j, & \text{if } s_j' \text{ is terminal} \\[4pt]
 r_j + \gamma \max_{a' \in \mathcal{A}(s_j')} \hat{q}(s_j', a', w_T), & \text{if } s_j' \text{ is non-terminal}
 \end{cases} \\
 \quad \textbf{end for} \\
-\quad \text{// Compute mini-batch mean squared loss:} \\
-\quad L(w) \leftarrow \dfrac{1}{B} \sum_{j=1}^B \left( y_j - \hat{q}(s_j, a_j, w) \right)^2 \\
-\quad \text{// Update main network parameters via gradient descent:} \\
-\quad w \leftarrow w - \alpha \nabla_w L(w) \\
-\quad \text{// Periodically synchronize target network:} \\
-\quad \textbf{if } t \bmod C = 0 \textbf{ then} \quad w_T \leftarrow w \\
+\quad L(w) \leftarrow \dfrac{1}{B} \sum_{j=1}^B \left( y_j - \hat{q}(s_j, a_j, w) \right)^2 \quad \text{// Mini-batch MSE loss} \\
+\quad w \leftarrow w - \alpha \nabla_w L(w) \quad \text{// Gradient descent update} \\
+\quad \textbf{if } t \bmod C = 0 \textbf{ then} \quad w_T \leftarrow w \quad \text{// Sync target network} \\
 \textbf{end for} \\
 \hline
 \end{array}
